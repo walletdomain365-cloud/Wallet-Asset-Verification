@@ -1,0 +1,283 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Binance-style Asset Verification — Demo</title>
+  <style>
+    :root{ --bg:#0f1724; --card:#111827; --muted:#9ca3af; --accent:#f59e0b; --success:#10b981; --danger:#ef4444; --glass: rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#071020 0%, #081424 60%);color:#e6eef8}
+    .container{max-width:1100px;margin:36px auto;padding:24px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    p.lead{color:var(--muted);margin:4px 0 0}.grid{display:grid;grid-template-columns:1fr 380px;gap:18px}
+.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+.card.small{padding:12px}
+.asset{display:flex;gap:12px;align-items:center}
+.asset .logo{width:56px;height:56px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent)}
+.asset .meta{flex:1}
+.meta .name{font-size:16px;margin:0}
+.meta .sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+.btn{display:inline-block;padding:8px 12px;border-radius:10px;background:var(--accent);color:#071024;font-weight:600;border:none;cursor:pointer}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+.btn.danger{background:var(--danger);color:white}
+
+.steps{margin-top:12px}
+.step{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:8px}
+.step .dot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,0.06);margin-top:6px}
+.step.ok .dot{background:var(--success)}
+.step.warn .dot{background:var(--accent)}
+.step.fail .dot{background:var(--danger)}
+.step .desc{color:var(--muted);font-size:13px}
+
+.status{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02)}
+.badge{font-weight:700;font-size:13px}
+
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+input[type=text], textarea{width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);color:inherit}
+
+.log{background:rgba(0,0,0,0.2);padding:12px;border-radius:8px;color:var(--muted);font-family:monospace;font-size:13px;max-height:260px;overflow:auto}
+
+footer{margin-top:18px;color:var(--muted);font-size:13px}
+
+/* responsive */
+@media (max-width:900px){.grid{grid-template-columns:1fr;}}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Binance Asset Verification — Demo</h1>
+        <p class="lead">Simulated workflow for verifying an <strong>identified asset</strong> and flagging an <strong>unidentified asset</strong>.</p>
+      </div>
+      <div class="status" id="globalStatus">
+        <span class="badge" id="globalBadge">Idle</span>
+      </div>
+    </header><div class="grid">
+  <!-- Left: Main panel -->
+  <div class="card">
+    <section class="asset" style="justify-content:space-between">
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="logo" id="assetLogo">BN</div>
+        <div class="meta">
+          <div class="name" id="assetName">No asset selected</div>
+          <div class="sub" id="assetTicker">--</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="margin-bottom:8px"><strong id="verStatus">Not Verified</strong></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" id="verifyBtn">Run Verification</button>
+          <button class="btn ghost" id="flagBtn">Flag as Unidentified</button>
+        </div>
+      </div>
+    </section>
+
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.03);margin:16px 0;">
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <label for="contract">Contract address / Token ID</label>
+        <input id="contract" type="text" placeholder="0x... (paste contract address)" />
+      </div>
+      <div style="width:140px">
+        <label>&nbsp;</label>
+        <button class="btn" id="loadMock">Load mock asset</button>
+      </div>
+    </div>
+
+    <div class="steps" id="steps">
+      <!-- Steps inserted by JS -->
+    </div>
+
+    <h3 style="margin-top:14px">Verification Report</h3>
+    <div class="log" id="reportLog">No report yet. Run verification to generate a report.
+    </div>
+
+    <footer>
+      This is a front-end demo that simulates Binance&rsquo;s verification stages (technical checks, compliance, audits, identity, and market signals). It does not contact real networks.
+    </footer>
+  </div>
+
+  <!-- Right: Sidebar -->
+  <aside class="card small">
+    <h4 style="margin:0 0 8px">Quick actions</h4>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn ghost" id="showChecklist">Show Verification Checklist</button>
+      <button class="btn ghost" id="copyReport">Copy Report</button>
+      <button class="btn danger" id="delistBtn">Simulate Delist</button>
+    </div>
+
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.03);margin:12px 0;">
+
+    <h4 style="margin:0 0 8px">Unidentified Asset</h4>
+    <div style="color:var(--muted);font-size:13px">When an asset fails verification or metadata is missing, mark it as <strong>Unidentified</strong>. This triggers deeper checks and risk flags.</div>
+    <div style="margin-top:10px">
+      <label for="reason">Reason (example)</label>
+      <textarea id="reason" rows="3" placeholder="Suspicious contract, no team info, low liquidity..."></textarea>
+    </div>
+
+  </aside>
+</div>
+
+  </div>  <script>
+    // Mock verification steps and a simple simulator.
+    const mockAssets = {
+      '0x-real-token': {
+        name: 'Binance Demo Token',
+        ticker: 'BDT',
+        logo: 'BD',
+        checks: [
+          ['Smart contract verified (source matches)', 'ok'],
+          ['Audit report present', 'ok'],
+          ['Team identity verified', 'ok'],
+          ['Tokenomics looks reasonable', 'ok'],
+          ['No major AML flags', 'ok'],
+          ['Sufficient liquidity', 'ok']
+        ],
+        summary: 'All checks passed. Asset appears legitimate and suitable for listing evaluation.'
+      },
+      '0x-scam-token': {
+        name: 'ScamCoin Fake',
+        ticker: 'SCAM',
+        logo: 'SC',
+        checks: [
+          ['Smart contract verified (source matches)', 'fail'],
+          ['Audit report present', 'warn'],
+          ['Team identity verified', 'fail'],
+          ['Tokenomics looks reasonable', 'warn'],
+          ['No major AML flags', 'fail'],
+          ['Sufficient liquidity', 'fail']
+        ],
+        summary: 'Multiple critical failures. Mark as Unidentified and perform manual legal & security review.'
+      },
+      '0x-unknown': {
+        name: 'Unknown Token',
+        ticker: 'UNKN',
+        logo: 'UK',
+        checks: [
+          ['Smart contract available but unverified', 'warn'],
+          ['No public audit', 'warn'],
+          ['Team identity unclear', 'warn'],
+          ['Tokenomics unclear', 'warn'],
+          ['Potential AML risk (unknown)', 'warn'],
+          ['Low liquidity', 'warn']
+        ],
+        summary: 'Insufficient data. Asset remains Unidentified until further information is provided.'
+      }
+    };
+
+    const assetNameEl = document.getElementById('assetName');
+    const assetTickerEl = document.getElementById('assetTicker');
+    const assetLogoEl = document.getElementById('assetLogo');
+    const stepsEl = document.getElementById('steps');
+    const reportLog = document.getElementById('reportLog');
+    const globalBadge = document.getElementById('globalBadge');
+    const verStatus = document.getElementById('verStatus');
+
+    let current = null;
+
+    function setGlobalStatus(text){ globalBadge.textContent = text }
+
+    function renderAsset(mockKey){
+      current = mockAssets[mockKey];
+      assetNameEl.textContent = current.name;
+      assetTickerEl.textContent = current.ticker;
+      assetLogoEl.textContent = current.logo;
+      verStatus.textContent = 'Not Verified';
+      stepsEl.innerHTML = '';
+      reportLog.textContent = 'No report yet. Run verification to generate a report.';
+      setGlobalStatus('Ready');
+    }
+
+    document.getElementById('loadMock').addEventListener('click', ()=>{
+      // Cycle through mock assets for demo
+      const keys = Object.keys(mockAssets);
+      const next = keys[Math.floor(Math.random()*keys.length)];
+      renderAsset(next);
+    });
+
+    document.getElementById('verifyBtn').addEventListener('click', ()=>{
+      if(!current){ alert('Load a mock asset first (click "Load mock asset").'); return }
+      runVerification(current);
+    });
+
+    document.getElementById('flagBtn').addEventListener('click', ()=>{
+      if(!current){ alert('Load a mock asset first.'); return }
+      markUnidentified(current);
+    });
+
+    document.getElementById('showChecklist').addEventListener('click', ()=>{
+      alert('Verification checklist:\n\n1) Smart contract source & ownership\n2) Security audits\n3) Team identity & legal checks\n4) AML/KYC screening\n5) Market liquidity & volume checks\n6) Community & reputation checks');
+    });
+
+    document.getElementById('copyReport').addEventListener('click', ()=>{
+      navigator.clipboard.writeText(reportLog.textContent).then(()=>alert('Report copied to clipboard'))
+    });
+
+    document.getElementById('delistBtn').addEventListener('click', ()=>{
+      if(confirm('Simulate delisting this asset?')){
+        setGlobalStatus('Delisted');
+        verStatus.textContent = 'Delisted';
+        reportLog.textContent = 'Asset delisted after sustained risk signals. Manual review required.';
+      }
+    });
+
+    function runVerification(asset){
+      setGlobalStatus('Verifying...');
+      stepsEl.innerHTML = '';
+      reportLog.textContent = '';
+      verStatus.textContent = 'Verifying...';
+
+      // Simulate asynchronous checks (sequential, with delays)
+      const checks = asset.checks;
+      let i=0;
+      function next(){
+        if(i>=checks.length){
+          // finalize
+          const fails = checks.filter(c=>c[1]==='fail').length;
+          const warns = checks.filter(c=>c[1]==='warn').length;
+          if(fails>0){
+            setGlobalStatus('Unidentified');
+            verStatus.textContent = 'Unidentified';
+          } else if(warns>0){
+            setGlobalStatus('Needs Manual Review');
+            verStatus.textContent = 'Needs Review';
+          } else {
+            setGlobalStatus('Verified');
+            verStatus.textContent = 'Verified';
+          }
+
+          reportLog.textContent = asset.summary + "\n\nDetailed checks:\n" + checks.map(c=>`- ${c[0]}: ${c[1].toUpperCase()}`).join('\n');
+          return;
+        }
+
+        const [desc, state] = checks[i];
+        const stepEl = document.createElement('div');
+        stepEl.className = 'step ' + (state==='ok'?'ok':state==='warn'?'warn':'fail');
+        stepEl.innerHTML = `<div class="dot"></div><div><strong style="font-size:13px">${desc}</strong><div class="desc">Status: ${state.toUpperCase()}</div></div>`;
+        stepsEl.appendChild(stepEl);
+        reportLog.textContent += `${desc}: ${state.toUpperCase()}\n`;
+        i++;
+        // small delay to mimic checks
+        setTimeout(next, 450);
+      }
+      next();
+    }
+
+    function markUnidentified(asset){
+      setGlobalStatus('Flagged - Unidentified');
+      verStatus.textContent = 'Flagged Unidentified';
+      const reason = document.getElementById('reason').value || 'Flagged by compliance team: insufficient data';
+      reportLog.textContent = `ASSET FLAGGED AS UNIDENTIFIED\n\nName: ${asset.name}\nTicker: ${asset.ticker}\nReason: ${reason}\n\nRecommended actions:\n- Manual legal review\n- Request audits/ownership proof\n- Monitor on-chain activity`;
+    }
+
+    // initialize with placeholder
+    setGlobalStatus('Idle');
+  </script></body>
+</html>
