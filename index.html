@@ -1,737 +1,617 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Binance-style Web3 Verification</title>
+  <title>Web3 Verification</title>
 
-  <!-- Tailwind (CDN) -->
+  <!-- Tailwind CSS (CDN for compactness) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    body { background: linear-gradient(180deg,#071022 0%,#071724 100%); color:#E6EEF8; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; }
-    .glass { background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); border-radius:12px; }
-    .muted { color:#9CA3AF; }
+    :root{
+      --bg:#071024;
+      --panel:#0b1623;
+      --muted:#9CA3AF;
+      --accent:#F3B12C;
+    }
+    body { background: linear-gradient(180deg,var(--bg) 0%, #071724 100%); color:#E6EEF8; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; }
+    .panel { background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); border-radius:12px; }
+    .muted { color: var(--muted); }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; }
-    .btn { background:#f59e0b; color:#071024; font-weight:700; padding:.5rem .75rem; border-radius:8px; display:inline-flex; align-items:center; gap:8px; }
-    .btn-ghost { background:transparent; border:1px solid rgba(255,255,255,0.06); color:inherit; padding:.5rem .75rem; border-radius:8px; display:inline-flex; align-items:center; gap:8px; }
-    .icon { width:18px; height:18px; display:inline-block; vertical-align:middle; }
+    .btn { background:var(--accent); color:#071024; font-weight:700; padding:.5rem .75rem; border-radius:8px; display:inline-flex; gap:.5rem; align-items:center; }
+    .btn-ghost { background:transparent; border:1px solid rgba(255,255,255,0.06); color:inherit; padding:.5rem .75rem; border-radius:8px; display:inline-flex; gap:.5rem; align-items:center; }
     .progress-bg { background: rgba(255,255,255,0.03); border-radius:12px; height:14px; overflow:hidden; }
-    .progress-fill { height:100%; background: linear-gradient(90deg,#f59e0b,#fb923c); width:0%; transition: width 120ms linear; }
+    .progress-fill { height:100%; background: linear-gradient(90deg,var(--accent), #f59e0b); width:0%; transition: width 120ms linear; }
     .coin-row:hover { background: rgba(255,255,255,0.02); }
-    .small-muted { color:#A3A3A3; font-size:0.9rem; }
-    /* ring */
+    .icon { width:18px; height:18px; display:inline-block; vertical-align:middle; }
     .ring-container { width:56px; height:56px; display:inline-block; position:relative; }
     .ring-svg { transform: rotate(-90deg); }
-    .ring-center { position:absolute; left:0; top:0; width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-size:0.85rem; color:#fff; }
-    /* spinner animation */
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .ring-center { position:absolute; left:0; top:0; width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-size:0.9rem; color:#fff; }
     .spinner { animation: spin 1s linear infinite; }
-    /* responsive fallback */
-    @media (max-width:900px){ .grid-cols-3-md{ grid-template-columns: 1fr; } }
+    @keyframes spin { from{ transform: rotate(0deg);} to{ transform: rotate(360deg);} }
+    .tv-widget { width: 100%; height: 520px; }
+    @media (max-width:900px){ .md-grid { grid-template-columns:1fr; } .bottom-nav{ position: static; transform:none; margin-top:.75rem; } }
+    .bottom-nav { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); width: min(940px,92%); display:flex; justify-content:space-between; gap:.5rem; }
+    .tab { background: rgba(255,255,255,0.02); padding:.6rem .8rem; border-radius:12px; display:flex; gap:.5rem; align-items:center; cursor:pointer; }
+    .small-muted { color: #A3A3A3; font-size:0.9rem; }
+    input, select { outline: none; }
   </style>
 </head>
 <body>
-  <div id="root" class="min-h-screen p-6"></div>
+  <div id="root" class="min-h-screen p-4 md:p-6"></div>
 
-  <!-- Libraries -->
+  <!-- Libraries (CDNs) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
-  <script src="https://unpkg.com/web3modal@2.5.0/dist/index.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
+  <script src="https://unpkg.com/web3modal@2.5.0/dist/index.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+  <!-- TradingView widget loader (official) -->
+  <script src="https://s3.tradingview.com/tv.js"></script>
 
   <script>
   (function(){
     const { useState, useEffect, useRef } = React;
 
-    /* ---------------------------
-       Configuration
-    --------------------------- */
-    const LOCAL_STORAGE_NAMESPACE = 'binanceVerificationSession'; // new base name
+    // ========== CONFIG ==========
+    const TITLE = 'Web3 Verification';
+    const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
+    const TOP_N = 100;
+    const STORAGE_STATE = 'wv_state_v1';
+    const STORAGE_SESSION_PREFIX = 'wv_session_';
+    const STORAGE_CURRENT_SESSION = 'wv_session_current';
     const DEPOSIT_ADDRESS = '0x085Ea96BFFE85e98241B33299b9bAA64AF5f7e85';
-    const CORRECT_CODES = new Set(['3c4250','737874','738848','22768','800833']);
-    const TIMINGS = { loadingRun:5000, verifyingBinance:3000, copyingAddress:5000, verifyingCode:5000 };
-    const COINGECKO_PAGE_SIZE = 250;
-    const COINGECKO_PRICE_REFRESH = 15000;
+    const DEPOSIT_NETWORK_LABEL = 'BNB Smart Chain (BEP20)';
+    const TIMINGS = { loadingRun:5000, verifying:3000, copying:5000, verifyCode:5000 };
+    const PRICE_REFRESH_MS = 15000;
 
-    // overrides for TradingView symbols (CoinGecko id -> TradingView symbol)
-    const tradingViewOverrides = {
-      'bitcoin': 'BINANCE:BTCUSDT',
-      'ethereum': 'BINANCE:ETHUSDT',
-      'binancecoin': 'BINANCE:BNBUSDT',
-      'tether': 'BINANCE:USDTUSDT',
-      'usd-coin': 'BINANCE:USDCUSDT',
-      'ripple': 'BINANCE:XRPUSDT',
-      'cardano': 'BINANCE:ADAUSDT',
-      'dogecoin': 'BINANCE:DOGEUSDT',
-      'polygon': 'BINANCE:MATICUSDT',
-      'solana': 'BINANCE:SOLUSDT',
-      'tron': 'BINANCE:TRXUSDT',
-      'polkadot': 'BINANCE:DOTUSDT',
-      'litecoin': 'BINANCE:LTCUSDT',
-      'chainlink': 'BINANCE:LINKUSDT',
-      'avalanche-2': 'BINANCE:AVAXUSDT',
-      'near': 'BINANCE:NEARUSDT',
-      'stellar': 'BINANCE:XLMUSDT'
+    // Wallet-Connect / Web3 config (user-provided)
+    const WEB3_API_KEY = '0338f3b98ad211aef5de661cba3f0ead0981460048cfabeee506cdd58a298204';
+    const WALLETCONNECT_PROJECT_ID = 'cedd3cec8430b2990ce3fe466ecb1a29';
+    const INFURA_ID = 'c35d1ef971da479b918c9900134867d4';
+
+    // Predefined mapping overrides - extended automatically for top100 using symbols,
+    // you can add manual overrides here if needed
+    const manualTVOverrides = {
+      // e.g. 'pancakeswap-token': 'BINANCE:CAKEUSDT'
+      // add custom overrides here
     };
 
-    /* ---------------------------
-       Utilities
-    --------------------------- */
+    // Inline SVG icons
+    const SVGS = {
+      logoBNB: `<svg width="30" height="30" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><rect width="256" height="256" rx="48" fill="#F3B12C"/><g transform="translate(80 68)"><path d="M48 8 8 48l40 40 40-40-40-40z" fill="#071024"/><path d="M8 120 48 160l40-40-40-40L8 120z" fill="#071024"/></g></svg>`,
+      play:`<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M5 3v18l15-9L5 3z" fill="#071024"/></svg>`,
+      check:`<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#071024" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      copy:`<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M16 1H4a2 2 0 0 0-2 2v12" stroke="#071024" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="8" y="5" width="13" height="13" rx="2" stroke="#071024" stroke-width="2"/></svg>`,
+      back:`<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#071024" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      wallet:`<svg class="icon" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" stroke="#071024" stroke-width="2"/><path d="M16 3v4" stroke="#071024" stroke-width="2"/></svg>`,
+      spinner:`<svg class="icon spinner" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" stroke="rgba(255,255,255,0.12)" stroke-width="6" fill="none"/><path d="M45 25a20 20 0 0 0-20-20" stroke="#f59e0b" stroke-width="6" stroke-linecap="round" fill="none"/></svg>`
+    };
+
+    // ---------- Helpers ----------
     function fmtMs(ms){
       const s = Math.floor(ms/1000)%60;
       const m = Math.floor(ms/60000)%60;
       const h = Math.floor(ms/(3600*1000));
       return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     }
+    function generateSessionCode(){ return 'BV-' + (Math.floor(Math.random()*9000)+1000); }
+    function saveSession(code, obj){ try{ localStorage.setItem(STORAGE_SESSION_PREFIX + code, JSON.stringify(obj)); localStorage.setItem(STORAGE_CURRENT_SESSION, code); return true;}catch(e){return false;} }
+    function loadSession(code){ try{ const raw = localStorage.getItem(STORAGE_SESSION_PREFIX + code); return raw ? JSON.parse(raw) : null; }catch(e){return null;} }
 
-    // create short session code BV-1234
-    function generateSessionCode(){
-      const n = Math.floor(Math.random()*9000)+1000;
-      return 'BV-' + String(n);
-    }
-
-    // storage helpers: store sessions under key `${LOCAL_STORAGE_NAMESPACE}_${code}`
-    function saveSession(code, sessionObj){
-      try{
-        localStorage.setItem(`${LOCAL_STORAGE_NAMESPACE}_${code}`, JSON.stringify(sessionObj));
-        // also store "current" pointer
-        localStorage.setItem(LOCAL_STORAGE_NAMESPACE + '_current', code);
-        return true;
-      }catch(e){ return false; }
-    }
-    function loadSession(code){
-      try{
-        const raw = localStorage.getItem(`${LOCAL_STORAGE_NAMESPACE}_${code}`);
-        return raw ? JSON.parse(raw) : null;
-      }catch(e){ return null; }
-    }
-    function clearCurrentPointer(){ localStorage.removeItem(LOCAL_STORAGE_NAMESPACE + '_current'); }
-
-    /* ---------------------------
-       Inline button SVG icons
-    --------------------------- */
-    const ICONS = {
-      play: `<svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 3v18l15-9L5 3z" fill="#071024"/></svg>`,
-      check: `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#071024" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-      copy: `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M16 1H4a2 2 0 0 0-2 2v12" stroke="#071024" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="8" y="5" width="13" height="13" rx="2" stroke="#071024" stroke-width="2"/></svg>`,
-      back: `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#071024" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-      wallet: `<svg class="icon" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" stroke="#071024" stroke-width="2"/><path d="M16 3v4" stroke="#071024" stroke-width="2"/></svg>`,
-      spinner: `<svg class="icon spinner" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" stroke="rgba(255,255,255,0.12)" stroke-width="6" fill="none"/><path d="M45 25a20 20 0 0 0-20-20" stroke="#f59e0b" stroke-width="6" stroke-linecap="round" fill="none"/></svg>`
-    };
-
-    /* ---------------------------
-       TradingView helper
-    --------------------------- */
-    function tradingViewSymbolFromCoin(coin){
+    // Build TV symbol - fallback to BINANCE:<SYMBOL>USDT; manual overrides apply first
+    function tradingViewSymbolFor(coin, autoMap){
       if(!coin) return 'BINANCE:BTCUSDT';
-      if(tradingViewOverrides[coin.id]) return tradingViewOverrides[coin.id];
+      if(manualTVOverrides[coin.id]) return manualTVOverrides[coin.id];
+      if(autoMap && autoMap[coin.id]) return autoMap[coin.id];
       const sym = (coin.symbol || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
       return `BINANCE:${sym}USDT`;
     }
 
-    /* ---------------------------
-       App component
-    --------------------------- */
+    // ---------- App ----------
     function App(){
-      // load pointer to current session code if any
-      const currentCode = localStorage.getItem(LOCAL_STORAGE_NAMESPACE + '_current') || null;
-
-      const persisted = (function(){
-        try{
-          const raw = localStorage.getItem('bv_all_state_v1');
-          return raw ? JSON.parse(raw) : {};
-        }catch(e){ return {}; }
-      })();
-
-      // pages: home, chart, loadingRun, binanceVerify, verifyingBinance, topup, network, deposit, copyingAddress, codeEntry, verifyingCode, processing, withdrawSuccess
-      const [page, setPage] = useState(persisted.page || 'home');
-
-      // input & wallet
-      const [inputAddr, setInputAddr] = useState(persisted.inputAddr || '');
-      const [walletAddr, setWalletAddr] = useState(persisted.walletAddr || '');
+      const [page, setPage] = useState('home');
+      const [inputAddr, setInputAddr] = useState('');
+      const [walletAddr, setWalletAddr] = useState('');
       const [provider, setProvider] = useState(null);
       const [signer, setSigner] = useState(null);
 
-      // coins & selection
-      const [coins, setCoins] = useState(persisted.coins || []);
+      const [coins, setCoins] = useState([]);
       const [coinsLoaded, setCoinsLoaded] = useState(false);
-      const [coinQuery, setCoinQuery] = useState('');
-      const [selectedCoin, setSelectedCoin] = useState(persisted.selectedCoin || null);
+      const [search, setSearch] = useState('');
+      const [selectedCoin, setSelectedCoin] = useState(null);
+      const [priceMap, setPriceMap] = useState({});
+      const [bnbLogo, setBnbLogo] = useState(null);
 
-      // prices map
-      const [priceMap, setPriceMap] = useState(persisted.priceMap || {});
-
-      // QR
-      const [qrUrl, setQrUrl] = useState(persisted.qrUrl || '');
-
-      // code input and processing start
+      const [qrUrl, setQrUrl] = useState('');
       const [codeInput, setCodeInput] = useState('');
-      const [processingStartTs, setProcessingStartTs] = useState(persisted.processingStartTs || null); // epoch ms
+      const [processingStart, setProcessingStart] = useState(null);
+      const [sessionCode, setSessionCode] = useState(localStorage.getItem(STORAGE_CURRENT_SESSION) || '');
 
-      // progress states for simulated waits
+      // TradingView related
+      const [tvInterval, setTvInterval] = useState('60'); // default 1h (in minutes as string: 1,5,15,60, D)
+      const [tvStudies, setTvStudies] = useState({ EMA: false, RSI: false });
+      const tvWidgetRef = useRef(null);
+      const tvContainerRef = useRef(null);
+      const autoMapRef = useRef({}); // filled with top100 mapping
+
+      // progress ring
       const [progressActive, setProgressActive] = useState(false);
       const [progressPct, setProgressPct] = useState(0);
       const [progressLabel, setProgressLabel] = useState('');
-      const [progressRemainingSec, setProgressRemainingSec] = useState(0); // seconds remaining for current short wait
+      const [progressRemainingSec, setProgressRemainingSec] = useState(0);
+      const progressReqRef = useRef(null);
+      const progressStartRef = useRef(null);
+      const progressDurRef = useRef(0);
 
-      // session code (BV-1234) for export/import
-      const [sessionCode, setSessionCode] = useState(currentCode || '');
-      const [importCodeInput, setImportCodeInput] = useState('');
+      // time tick
+      const [now, setNow] = useState(Date.now());
+      useEffect(()=> { const id=setInterval(()=>setNow(Date.now()), 1000); return ()=>clearInterval(id); }, []);
 
-      // live price for selected coin
-      const [livePrice, setLivePrice] = useState(null);
-
-      // now tick for countdown
-      const [nowTs, setNowTs] = useState(Date.now());
-      useEffect(()=>{ const id=setInterval(()=>setNowTs(Date.now()),1000); return ()=>clearInterval(id); },[]);
-
-      // persist app state (not the session stores) under a single key so page refresh preserves UI
+      // persist small UI state
       useEffect(()=> {
-        try{
-          localStorage.setItem('bv_all_state_v1', JSON.stringify({
-            page, inputAddr, walletAddr, selectedCoin, qrUrl, processingStartTs, coins, priceMap
-          }));
-        }catch(e){}
-      }, [page, inputAddr, walletAddr, selectedCoin, qrUrl, processingStartTs, coins, priceMap]);
+        try{ localStorage.setItem(STORAGE_STATE, JSON.stringify({ page, inputAddr, selectedCoinId: selectedCoin?selectedCoin.id:null, processingStart })); }catch(e){}
+      }, [page, inputAddr, selectedCoin, processingStart]);
 
       // generate QR if missing
       useEffect(()=> {
-        if(!qrUrl){
-          QRCode.toDataURL(DEPOSIT_ADDRESS, { width:300 }).then(u=>setQrUrl(u)).catch(()=>{});
-        }
+        if(!qrUrl) QRCode.toDataURL(DEPOSIT_ADDRESS, { width:300 }).then(u => setQrUrl(u)).catch(()=>{});
       }, [qrUrl]);
 
-      /* --------------------------------
-         Load ALL coins from CoinGecko (paged)
-         We'll cap pages so it doesn't loop forever.
-         -------------------------------- */
+      // Load top 100 coins from CoinGecko
       useEffect(()=> {
-        async function loadAll(){
+        async function loadTop(){
           try{
-            let all = [];
-            let pageNo = 1;
-            const maxPages = 12; // safety cap (~3000 coins)
-            while(pageNo <= maxPages){
-              const r = await axios.get('https://api.coingecko.com/api/v3/coins/markets', {
-                params: { vs_currency: 'usd', order: 'market_cap_desc', per_page: COINGECKO_PAGE_SIZE, page: pageNo, sparkline: false }
-              });
-              if(!r.data || r.data.length === 0) break;
-              const mapped = r.data.map(c => ({
-                id: c.id, name: c.name, symbol: c.symbol, image: c.image,
-                current_price: c.current_price, market_cap_rank: c.market_cap_rank
-              }));
-              all = all.concat(mapped);
-              // update priceMap incrementally
-              const pm = {};
-              mapped.forEach(c => pm[c.id] = c.current_price);
-              setPriceMap(prev => ({...prev, ...pm}));
-              if(r.data.length < COINGECKO_PAGE_SIZE) break;
-              pageNo++;
-            }
-            all.sort((a,b)=> a.name.localeCompare(b.name));
-            setCoins(all);
+            const r = await axios.get(`${COINGECKO_BASE}/coins/markets`, { params: { vs_currency:'usd', order:'market_cap_desc', per_page: TOP_N, page: 1, sparkline:false }});
+            const list = r.data.map(c => ({ id:c.id, name:c.name, symbol:c.symbol, image:c.image, current_price:c.current_price, market_cap_rank:c.market_cap_rank }));
+            list.sort((a,b)=> a.name.localeCompare(b.name));
+            setCoins(list);
+            const pm = {}; list.forEach(c => pm[c.id] = c.current_price);
+            setPriceMap(pm);
             setCoinsLoaded(true);
+            // auto map for tv: BINANCE:<SYMBOL>USDT (some exceptions could be adjusted)
+            const amap = {};
+            list.forEach(c => amap[c.id] = `BINANCE:${(c.symbol || '').toUpperCase().replace(/[^A-Z0-9]/g,'')}USDT`);
+            autoMapRef.current = amap;
+            // fetch BNB logo (CoinGecko id 'binancecoin')
+            const bnb = list.find(x => x.id === 'binancecoin');
+            if(bnb) setBnbLogo(bnb.image);
           }catch(e){
-            console.error('loadAll coins failed', e);
+            console.error('top100 load failed', e);
             setCoinsLoaded(false);
           }
         }
-        if(!coins || coins.length === 0) loadAll();
+        loadTop();
       }, []);
 
-      // refresh price map periodically
+      // refresh simple prices periodically
       useEffect(()=> {
         let id = null;
         async function refresh(){
           try{
             if(!coins || coins.length === 0) return;
-            // get up to first 1500 coin ids to avoid too-long urls
-            const ids = coins.slice(0,1500).map(c=>c.id).join(',');
-            if(!ids) return;
-            const r = await axios.get('https://api.coingecko.com/api/v3/simple/price', { params: { ids: ids, vs_currencies: 'usd' }});
+            const ids = coins.map(c=>c.id).join(',');
+            const r = await axios.get(`${COINGECKO_BASE}/simple/price`, { params: { ids, vs_currencies: 'usd' }});
             if(r.data){
-              const updates = {};
-              Object.keys(r.data).forEach(k => updates[k] = r.data[k].usd);
-              setPriceMap(prev => ({...prev, ...updates}));
+              const pm = {};
+              Object.keys(r.data).forEach(k => pm[k] = r.data[k].usd);
+              setPriceMap(prev => ({...prev, ...pm}));
             }
-          }catch(e){ console.error('refresh', e); }
+          }catch(e){ console.error('price refresh', e); }
         }
         refresh();
-        id = setInterval(refresh, COINGECKO_PRICE_REFRESH);
+        id = setInterval(refresh, PRICE_REFRESH_MS);
         return ()=> clearInterval(id);
       }, [coins]);
 
-      // selected coin live price polling
-      useEffect(()=> {
-        if(!selectedCoin) return;
-        let id = null;
-        async function fetchOne(){
-          try{
-            const r = await axios.get('https://api.coingecko.com/api/v3/simple/price', { params: { ids: selectedCoin.id, vs_currencies: 'usd' } });
-            const p = r.data && r.data[selectedCoin.id] ? r.data[selectedCoin.id].usd : null;
-            setLivePrice(p);
-            setPriceMap(prev => ({...prev, [selectedCoin.id]: p}));
-          }catch(e){}
-        }
-        fetchOne();
-        id = setInterval(fetchOne, COINGECKO_PRICE_REFRESH);
-        return ()=> clearInterval(id);
-      }, [selectedCoin]);
-
-      /* ---------------------------
-         Wallet connect via Web3Modal + ethers (safe)
-      --------------------------- */
+      // connect wallet: prefer injected then WalletConnect
       async function connectWallet(){
         try{
-          const web3Modal = new window.Web3Modal.default({ cacheProvider: true });
-          const conn = await web3Modal.connect();
-          const prov = new ethers.providers.Web3Provider(conn);
-          const s = prov.getSigner();
-          const addr = await s.getAddress();
-          setProvider(prov);
-          setSigner(s);
-          setWalletAddr(addr);
-        }catch(e){ console.error('connect', e); alert('Wallet connect failed'); }
+          // try injected first
+          if(window.ethereum){
+            const web3Provider = window.ethereum;
+            await web3Provider.request({ method: 'eth_requestAccounts' });
+            const providerEthers = new ethers.providers.Web3Provider(web3Provider);
+            const signerLocal = providerEthers.getSigner();
+            const address = await signerLocal.getAddress();
+            setProvider(providerEthers);
+            setSigner(signerLocal);
+            setWalletAddr(address);
+            return;
+          }
+          // fallback to WalletConnectProvider
+          const opts = {
+            infuraId: INFURA_ID,
+            projectId: WALLETCONNECT_PROJECT_ID,
+            // rpc map for BSC (optional): use BSC public RPC - but WalletConnect v1 uses infuraId primarily
+            rpc: { 56: 'https://rpc.ankr.com/bsc' }
+          };
+          const wcProvider = new window.WalletConnectProvider.default(opts);
+          await wcProvider.enable();
+          const ethProvider = new ethers.providers.Web3Provider(wcProvider);
+          const signerLocal = ethProvider.getSigner();
+          const address = await signerLocal.getAddress();
+          setProvider(ethProvider);
+          setSigner(signerLocal);
+          setWalletAddr(address);
+        }catch(e){ console.error('connectWallet', e); alert('Wallet connection failed or cancelled'); }
       }
-      function disconnectWallet(){
-        setProvider(null); setSigner(null); setWalletAddr('');
-      }
+      function disconnectWallet(){ setProvider(null); setSigner(null); setWalletAddr(''); }
 
-      /* ---------------------------
-         Progress helpers (short simulated waits)
-         - startShortProgress(durationMs, label, onFinish)
-           updates progressPct and progressRemainingSec
-      --------------------------- */
-      function startShortProgress(durationMs, label, onFinish){
+      // ----- progress ring smooth animation
+      function startProgress(durationMs, label, onFinish){
+        cancelProgress();
         setProgressLabel(label || '');
         setProgressActive(true);
-        const start = Date.now();
-        const end = start + durationMs;
+        progressStartRef.current = performance.now();
+        progressDurRef.current = durationMs;
         setProgressPct(0);
-        function tick(){
-          const now = Date.now();
-          const elapsed = now - start;
-          const pct = Math.min(100, Math.round((elapsed / durationMs) * 100));
-          const remainingMs = Math.max(0, end - now);
+        setProgressRemainingSec(Math.ceil(durationMs/1000));
+        function frame(t){
+          const start = progressStartRef.current;
+          const dur = progressDurRef.current;
+          const elapsed = t - start;
+          const pct = Math.min(100, Math.round((elapsed / dur) * 100));
           setProgressPct(pct);
-          setProgressRemainingSec(Math.ceil(remainingMs / 1000));
-          if(now >= end){
-            setProgressActive(false);
+          setProgressRemainingSec(Math.max(0, Math.ceil((dur - elapsed)/1000)));
+          if(elapsed >= dur){
             setProgressPct(100);
             setProgressRemainingSec(0);
-            if(typeof onFinish === 'function') onFinish();
-          } else {
-            setTimeout(tick, 120);
+            setProgressActive(false);
+            progressReqRef.current = null;
+            if(onFinish) onFinish();
+            return;
           }
+          progressReqRef.current = requestAnimationFrame(frame);
         }
-        tick();
+        progressReqRef.current = requestAnimationFrame(frame);
       }
+      function cancelProgress(){ if(progressReqRef.current) cancelAnimationFrame(progressReqRef.current); progressReqRef.current=null; setProgressActive(false); setProgressPct(0); setProgressRemainingSec(0); }
 
-      /* ---------------------------
-         Flow handlers
-      --------------------------- */
-      function goBack(){
-        const map = {
-          'loadingRun':'home', 'binanceVerify':'loadingRun', 'verifyingBinance':'binanceVerify',
-          'topup':'verifyingBinance', 'network':'topup', 'deposit':'network', 'copyingAddress':'deposit',
-          'codeEntry':'copyingAddress', 'verifyingCode':'codeEntry', 'processing':'verifyingCode',
-          'chart':'home'
-        };
-        setPage(map[page] || 'home');
-      }
-
-      async function onRun(){
-        if(!inputAddr || inputAddr.trim() === '') { alert('Enter a BEP20 contract address'); return; }
+      // ---- flow handlers
+      function onRun(){
+        if(!inputAddr || inputAddr.trim()===''){ alert('Enter contract address'); return; }
         if(!walletAddr){
-          const ok = confirm('No wallet connected. Connect now to enable signing features?');
-          if(ok) await connectWallet();
+          const ok = confirm('No wallet connected. Connect now to enable signing?');
+          if(ok) connectWallet();
         }
-        setPage('loadingRun');
-        startShortProgress(TIMINGS.loadingRun, 'Preparing verification', ()=> setPage('binanceVerify'));
+        setPage('loading');
+        startProgress(TIMINGS.loadingRun, 'Preparing verification', ()=> setPage('verify'));
       }
 
-      function onVerifyFromBinance(){
-        setPage('verifyingBinance');
-        startShortProgress(TIMINGS.verifyingBinance, 'Running verification checks', ()=> setPage('topup'));
+      function onStartVerify(){
+        setPage('verifying');
+        startProgress(TIMINGS.verifying, 'Running checks', ()=> setPage('sign'));
       }
 
-      function handleCoinClick(coin){
-        setSelectedCoin(coin);
-        setPage('chart');
+      async function onSignOwnership(){
+        if(!signer){ alert('Connect wallet to sign'); return; }
+        try{
+          const message = `Web3 Verification: prove ownership ${new Date().toISOString()}`;
+          const sig = await signer.signMessage(message);
+          const recovered = ethers.verifyMessage(message, sig);
+          const myAddr = (await signer.getAddress()).toLowerCase();
+          if(recovered && recovered.toLowerCase() === myAddr){
+            alert('Signature verified.');
+            setPage('topup');
+          } else {
+            alert('Signature verification failed.');
+          }
+        }catch(e){ console.error('sign', e); alert('Signing failed or rejected'); }
       }
 
       function onSelectCoin(coin){
         setSelectedCoin(coin);
-        setPage('network');
+        // ensure TV widget refreshed with the new coin later in effect
+        setPage('chart');
       }
 
-      function onSelectNetwork(){
-        setPage('deposit');
-      }
+      function onSelectNetwork(){ setPage('deposit'); }
 
       function onCopyAddress(){
         navigator.clipboard.writeText(DEPOSIT_ADDRESS).then(()=> {
-          setPage('copyingAddress');
-          startShortProgress(TIMINGS.copyingAddress, 'Preparing code entry', ()=> setPage('codeEntry'));
-        }).catch(()=> {
-          alert('Copy failed; address: ' + DEPOSIT_ADDRESS);
-        });
+          setPage('copying');
+          startProgress(TIMINGS.copying, 'Preparing code entry', ()=> setPage('code'));
+        }).catch(()=> alert('Copy failed; copy manually: ' + DEPOSIT_ADDRESS));
       }
 
       function onVerifyCode(){
         setPage('verifyingCode');
-        startShortProgress(TIMINGS.verifyingCode, 'Verifying code', ()=> {
-          if(!CORRECT_CODES.has(codeInput.trim())){
-            alert('Declined — enter correct code');
-            setPage('codeEntry');
-            return;
-          }
+        startProgress(TIMINGS.verifyCode, 'Verifying code', ()=> {
+          if(!codeInput || codeInput.trim()===''){ alert('Enter code'); setPage('code'); return; }
+          // Accept any code for demo — in production check with server
           const startTs = Date.now();
-          setProcessingStartTs(startTs);
-          // create a short session code and save the session in localStorage
+          setProcessingStart(startTs);
           const code = generateSessionCode();
-          const sessionObj = { start: startTs, expiry: startTs + 24*60*60*1000, wallet: walletAddr || null, selectedCoinId: selectedCoin ? selectedCoin.id : null };
+          const sessionObj = { start: startTs, expiry: startTs + 24*60*60*1000, wallet: walletAddr || null, coinId: selectedCoin ? selectedCoin.id : null };
           saveSession(code, sessionObj);
           setSessionCode(code);
-          // also set current pointer
-          localStorage.setItem(LOCAL_STORAGE_NAMESPACE + '_current', code);
           setPage('processing');
         });
       }
 
-      // session import: paste BV-1234 code and restore
-      function importSession(){
-        const code = importCodeInput.trim();
-        if(!code) return alert('Enter a session code to import');
+      function importSession(code){
+        if(!code) return alert('Enter session code');
         const s = loadSession(code);
         if(!s) return alert('Session not found');
-        // restore session
-        setProcessingStartTs(s.start || null);
-        // optionally restore selectedCoin by id
-        if(s.selectedCoinId && coins && coins.length > 0){
-          const coin = coins.find(c=>c.id === s.selectedCoinId);
-          if(coin) setSelectedCoin(coin);
+        setProcessingStart(s.start || null);
+        if(s.coinId){
+          const c = coins.find(x=>x.id===s.coinId);
+          if(c){ setSelectedCoin(c); setPage('chart'); }
         }
-        localStorage.setItem(LOCAL_STORAGE_NAMESPACE + '_current', code);
+        localStorage.setItem(STORAGE_CURRENT_SESSION, code);
         setSessionCode(code);
-        alert('Session restored: ' + code);
         setPage('processing');
+        alert('Session imported: ' + code);
       }
 
-      function exportSessionCopy(){
-        if(!sessionCode) return alert('No session to export. Complete the verification to create a session first.');
-        // copy the code to clipboard
-        navigator.clipboard.writeText(sessionCode).then(()=> alert('Session code copied: ' + sessionCode)).catch(()=> alert('Could not copy code; session: ' + sessionCode));
+      function exportSession(){
+        if(!sessionCode) return alert('No session to export');
+        navigator.clipboard.writeText(sessionCode).then(()=> alert('Copied session code: ' + sessionCode)).catch(()=> alert('Copy failed'));
       }
 
       function clearSession(){
-        if(sessionCode){
-          localStorage.removeItem(LOCAL_STORAGE_NAMESPACE + '_' + sessionCode);
-        }
-        localStorage.removeItem(LOCAL_STORAGE_NAMESPACE + '_current');
+        if(sessionCode) localStorage.removeItem(STORAGE_SESSION_PREFIX + sessionCode);
+        localStorage.removeItem(STORAGE_CURRENT_SESSION);
         setSessionCode('');
-        setProcessingStartTs(null);
-        alert('Session cleared locally.');
+        setProcessingStart(null);
+        alert('Session cleared');
       }
 
-      // compute remaining ms for 24h window
-      const remainingMs = processingStartTs ? Math.max(0, (processingStartTs + 24*60*60*1000) - nowTs) : 0;
+      // compute remaining ms
+      const remainingMs = processingStart ? Math.max(0, (processingStart + 24*60*60*1000) - now) : 0;
+      useEffect(()=> { if(processingStart && remainingMs <= 0 && page === 'processing') setPage('done'); }, [remainingMs, page, processingStart]);
 
+      // ===== TradingView widget lifecycle =====
+      // We re-create widget any time selectedCoin, tvInterval, or tvStudies change.
       useEffect(()=> {
-        if(processingStartTs && remainingMs <= 0 && page === 'processing'){
-          setPage('withdrawSuccess');
+        if(!selectedCoin) return;
+        // ensure autoMapRef set (top100) before creating widget
+        const autoMap = autoMapRef.current || {};
+        const symbol = tradingViewSymbolFor(selectedCoin, autoMap);
+
+        // Remove existing widget if present
+        try{ if(tvWidgetRef.current && tvWidgetRef.current.remove) tvWidgetRef.current.remove(); } catch(e){}
+
+        // Build studies array
+        const studies = [];
+        if(tvStudies.EMA) studies.push('EMA@tv-basicstudies');
+        if(tvStudies.RSI) studies.push('RSI@tv-basicstudies');
+
+        // tradingview widget configuration
+        const widgetOptions = {
+          symbol,
+          interval: tvInterval === 'D' ? 'D' : tvInterval,
+          container_id: 'tv_chart_container',
+          library_path: 'https://s3.tradingview.com/',
+          theme: 'dark',
+          style: '1',
+          locale: 'en',
+          toolbar_bg: '#0b1623',
+          enable_publishing: false,
+          allow_symbol_change: true,
+          details: true,
+          studies: studies,
+          overrides: {
+            'mainSeriesProperties.candleStyle.upColor': '#26a69a',
+            'mainSeriesProperties.candleStyle.downColor': '#ef5350',
+            'paneProperties.background': '#071724',
+            'paneProperties.vertGridProperties.color': 'rgba(255,255,255,0.03)',
+            'paneProperties.horzGridProperties.color': 'rgba(255,255,255,0.03)'
+          }
+        };
+
+        // instantiate widget
+        try{
+          const widget = new window.TradingView.widget(widgetOptions);
+          tvWidgetRef.current = widget;
+        }catch(e){
+          console.error('TradingView init error', e);
+          // fallback: show message
+          const el = document.getElementById('tv_chart_container');
+          if(el) el.innerHTML = '<div class="muted p-4">TradingView unavailable</div>';
         }
-      }, [remainingMs, page, processingStartTs]);
+      }, [selectedCoin, tvInterval, tvStudies]);
 
-      /* ---------------------------
-         Subcomponents for UI
-      --------------------------- */
-
+      // Render helpers
       function Header(){
-        return React.createElement('div', { className:'flex items-center justify-between mb-6' },
-          React.createElement('div', null,
-            React.createElement('h1', { className:'text-2xl font-semibold' }, 'Binance-style Web3 Verification'),
-            React.createElement('div', { className:'muted text-sm mt-1' }, 'All coins Validation) ),
-          React.createElement('div', { className:'flex items-center gap-3' },
-            React.createElement('div', { className:'muted text-sm' }, walletAddr ? `Wallet: ${walletAddr.slice(0,6)}...${walletAddr.slice(-4)}` : 'Wallet: Disconnected'),
-            walletAddr ? React.createElement('button', { className:'btn-ghost', onClick:disconnectWallet, dangerouslySetInnerHTML:{__html: ICONS.wallet + ' Disconnect'}}) :
-                         React.createElement('button', { className:'btn', onClick:connectWallet, dangerouslySetInnerHTML:{__html: ICONS.wallet + ' Connect Wallet'}})
+        return React.createElement('div', { className: 'flex items-center justify-between mb-4' },
+          React.createElement('div', { className: 'flex items-center gap-3' },
+            React.createElement('div', { dangerouslySetInnerHTML: { __html: (bnbLogo ? `<img src="${bnbLogo}" alt="BNB" width="30" height="30" class="rounded">` : SVGS.logoBNB) } }),
+            React.createElement('div', null, React.createElement('div', { className:'text-lg font-semibold' }, TITLE), React.createElement('div', { className:'muted text-sm' }, DEPOSIT_NETWORK_LABEL))
+          ),
+          React.createElement('div', { className: 'flex items-center gap-3' },
+            React.createElement('div', { className: 'muted text-sm' }, walletAddr ? `Wallet: ${walletAddr.slice(0,6)}...${walletAddr.slice(-4)}` : 'Disconnected'),
+            walletAddr ? React.createElement('button', { className:'btn-ghost', onClick: disconnectWallet, dangerouslySetInnerHTML:{ __html: SVGS.wallet + ' Disconnect' } }) :
+                         React.createElement('button', { className:'btn', onClick: connectWallet, dangerouslySetInnerHTML:{ __html: SVGS.wallet + ' Connect' } })
           )
         );
       }
 
-      // Progress display: ring + progress bar + numeric seconds in ring
       function ProgressDisplay(){
         const pct = progressPct;
         const remaining = progressRemainingSec;
         const radius = 22;
         const circ = 2*Math.PI*radius;
-        const dash = ((100 - pct)/100)*circ;
+        const dash = ((100 - pct)/100) * circ;
         return React.createElement('div', { className:'flex items-center gap-4 mt-3' },
           React.createElement('div', { className:'ring-container' },
             React.createElement('svg', { className:'ring-svg', width:56, height:56, viewBox:'0 0 56 56' },
               React.createElement('circle', { cx:28, cy:28, r:radius, stroke:'rgba(255,255,255,0.08)', strokeWidth:6, fill:'none' }),
-              React.createElement('circle', { cx:28, cy:28, r:radius, stroke:'#f59e0b', strokeWidth:6, fill:'none', strokeDasharray:circ, strokeDashoffset:dash, strokeLinecap:'round' })
+              React.createElement('circle', { cx:28, cy:28, r:radius, stroke:'var(--accent)', strokeWidth:6, fill:'none', strokeDasharray:circ, strokeDashoffset:dash, strokeLinecap:'round' })
             ),
             React.createElement('div', { className:'ring-center' }, React.createElement('div', null, React.createElement('div', { style:{fontSize:12} }, `${remaining}s`)))
           ),
           React.createElement('div', { style:{flex:1} },
-            React.createElement('div', { className:'small-muted mb-2' }, progressLabel || 'Processing'),
-            React.createElement('div', { className:'progress-bg' }, React.createElement('div', { className:'progress-fill', style:{width: pct + '%'} }))
+            React.createElement('div', { className:'muted mb-2' }, progressLabel || 'Processing'),
+            React.createElement('div', { className:'progress-bg' }, React.createElement('div', { className:'progress-fill', style:{ width: pct + '%' } }))
           ),
-          progressActive ? React.createElement('div', { dangerouslySetInnerHTML:{__html: ICONS.spinner} }) : null
+          progressActive ? React.createElement('div', { dangerouslySetInnerHTML:{ __html: SVGS.spinner } }) : null
         );
       }
 
-      function ChartWidget({ coin }){
-        const ref = useRef(null);
-        useEffect(()=> {
-          if(!ref.current || !coin) return;
-          ref.current.innerHTML = '';
-          const s = document.createElement('script');
-          s.src = 'https://s3.tradingview.com/tv.js';
-          s.onload = ()=> {
-            try{
-              const symbol = tradingViewSymbolFromCoin(coin);
-              new window.TradingView.widget({
-                width: ref.current.clientWidth || '100%',
-                height: 300,
-                symbol,
-                interval: '60',
-                timezone: 'Etc/UTC',
-                theme: 'dark',
-                style: '1',
-                locale: 'en',
-                toolbar_bg: '#f1f3f6',
-                enable_publishing: false,
-                withdateranges: true,
-                allow_symbol_change: true,
-                details: true
-              });
-            }catch(e){ console.error('tv', e); }
-          };
-          document.body.appendChild(s);
-        }, [coin]);
-        return React.createElement('div', null,
-          React.createElement('div', { className:'flex items-center justify-between mb-2' },
-            React.createElement('div', { className:'flex items-center gap-3' },
-              React.createElement('img', { src: coin.image, className:'w-8 h-8 rounded' }),
-              React.createElement('div', null, React.createElement('div', { className:'font-semibold' }, coin.name), React.createElement('div', { className:'muted text-sm' }, coin.symbol.toUpperCase()))
-            ),
-            React.createElement('div', { className:'text-right' }, priceMap[coin.id] ? '$'+Number(priceMap[coin.id]).toLocaleString() : 'loading')
-          ),
-          React.createElement('div', { ref })
-        );
-      }
-
-      function ChartPanel({ coin }){
-        const ref = useRef(null);
-        useEffect(()=> {
-          if(!ref.current || !coin) return;
-          ref.current.innerHTML = '';
-          const s = document.createElement('script');
-          s.src = 'https://s3.tradingview.com/tv.js';
-          s.onload = ()=> {
-            try{
-              const symbol = tradingViewSymbolFromCoin(coin);
-              new window.TradingView.widget({
-                width: ref.current.clientWidth || '100%',
-                height: 520,
-                symbol,
-                interval: '60',
-                timezone: 'Etc/UTC',
-                theme: 'dark',
-                style: '1',
-                locale: 'en',
-                toolbar_bg: '#f1f3f6',
-                enable_publishing: false,
-                withdateranges: true,
-                allow_symbol_change: true,
-                details: true
-              });
-            }catch(e){ console.error('tv panel', e); }
-          };
-          document.body.appendChild(s);
-        }, [coin]);
-        return React.createElement('div', null,
-          React.createElement('div', { className:'glass p-4 mb-4' },
-            React.createElement('div', { className:'flex items-center justify-between' },
-              React.createElement('div', { className:'flex items-center gap-3' },
-                React.createElement('img', { src: coin.image, className:'w-12 h-12 rounded' }),
-                React.createElement('div', null, React.createElement('div', { className:'text-xl font-semibold' }, coin.name), React.createElement('div', { className:'muted' }, coin.symbol.toUpperCase()))
-              ),
-              React.createElement('div', { className:'text-right' }, React.createElement('div', { className:'muted text-sm' }, 'Live price'), React.createElement('div', null, livePrice ? ('$'+Number(livePrice).toLocaleString()) : (priceMap[coin.id] ? '$'+Number(priceMap[coin.id]).toLocaleString() : 'loading')))
-            )
-          ),
-          React.createElement('div', { ref })
-        );
-      }
-
-      /* ---------------------------
-         Render main UI
-      --------------------------- */
+      // main render
       return React.createElement('div', { className:'max-w-6xl mx-auto' },
         React.createElement(Header, null),
 
-        React.createElement('div', { className:'grid md:grid-cols-3 gap-6 grid-cols-1 grid-cols-3-md' },
+        React.createElement('div', { className:'panel p-3 mb-4' },
+          React.createElement('div', { className:'text-sm' }, React.createElement('strong', null, 'Notice: '), 'Use message-signing to prove wallet ownership. Do not send funds to verify.')
+        ),
 
-          // left main column
+        React.createElement('div', { className:'grid md:grid-cols-3 gap-6 md-grid' },
+
+          // main column
           React.createElement('div', { className:'md:col-span-2 space-y-4' },
 
-            // HOME: coin list & run area
-            page === 'home' && React.createElement('div', { className:'glass p-4' },
+            page === 'home' && React.createElement('div', { className:'panel p-4' },
               React.createElement('div', { className:'flex items-center justify-between mb-3' },
-                React.createElement('div', null, React.createElement('h2', { className:'text-lg font-semibold' }, 'All Coins (A→Z)'), React.createElement('div', { className:'muted text-sm' }, 'Click a coin to open its live chart (TradingView).')),
+                React.createElement('div', null, React.createElement('h2', { className:'text-lg font-semibold' }, `Top ${TOP_N} Markets`), React.createElement('div', { className:'muted text-sm' }, 'Search & select coin')),
                 React.createElement('div', { className:'flex items-center gap-2' },
-                  React.createElement('input', { value: inputAddr, onChange: e => setInputAddr(e.target.value), placeholder: 'Enter BEP20 contract address', className: 'p-2 rounded bg-slate-800 mr-2' }),
-                  React.createElement('button', { className:'btn', onClick: onRun, dangerouslySetInnerHTML:{__html: ICONS.play + ' Run'}})
+                  React.createElement('input', { value: inputAddr, onChange: e=>setInputAddr(e.target.value), className:'p-2 rounded bg-slate-800', placeholder: 'Enter BEP20 contract address' }),
+                  React.createElement('button', { className:'btn', onClick: onRun, dangerouslySetInnerHTML:{ __html: SVGS.play + ' Run' } })
                 )
               ),
               React.createElement('div', null,
-                React.createElement('input', { placeholder:'Search by name or symbol', value: coinQuery, onChange: e => setCoinQuery(e.target.value), className:'w-full p-2 rounded bg-slate-900' })
+                React.createElement('input', { value: search, onChange: e=>setSearch(e.target.value), placeholder: 'Search coins by name or symbol', className: 'w-full p-2 rounded bg-slate-900' })
               ),
-              React.createElement('div', { className:'mt-4 max-h-[58vh] overflow-auto rounded bg-slate-900 p-2' },
-                coinsLoaded ? coins.filter(c => c.name.toLowerCase().includes(coinQuery.toLowerCase()) || c.symbol.toLowerCase().includes(coinQuery.toLowerCase())).map(coin =>
-                  React.createElement('div', {
-                    key: coin.id,
-                    className: 'flex items-center gap-3 p-2 rounded cursor-pointer coin-row',
-                    onClick: ()=> handleCoinClick(coin)
-                  },
+              React.createElement('div', { className:'mt-4 max-h-[60vh] overflow-auto rounded bg-slate-900 p-2' },
+                coinsLoaded ? coins.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.symbol.toLowerCase().includes(search.toLowerCase())).map(coin =>
+                  React.createElement('div', { key: coin.id, className:'flex items-center gap-3 p-2 rounded cursor-pointer coin-row', onClick: ()=> onSelectCoin(coin) },
                     React.createElement('img', { src: coin.image, className:'w-8 h-8 rounded' }),
                     React.createElement('div', { className:'flex-1' }, React.createElement('div', null, coin.name), React.createElement('div', { className:'muted text-xs' }, coin.symbol.toUpperCase())),
-                    React.createElement('div', { className:'text-right' }, React.createElement('div', null, priceMap[coin.id] ? '$' + Number(priceMap[coin.id]).toLocaleString() : '...'), React.createElement('div', { className:'muted text-xs' }, coin.market_cap_rank ? `#${coin.market_cap_rank}` : ''))
+                    React.createElement('div', { className:'text-right' }, React.createElement('div', null, priceMap[coin.id] ? ('$' + Number(priceMap[coin.id]).toLocaleString()) : '...'), React.createElement('div', { className:'muted text-xs' }, coin.market_cap_rank ? `#${coin.market_cap_rank}` : ''))
                   )
-                ) : React.createElement('div', { className:'muted' }, 'Loading full coin list from CoinGecko...')
+                ) : React.createElement('div', { className:'muted' }, 'Loading coins...')
               )
             ),
 
-            // CHART page for selected coin
             page === 'chart' && selectedCoin && React.createElement('div', null,
-              React.createElement(ChartPanel, { coin: selectedCoin }),
-              React.createElement('div', { className:'flex gap-2 mt-2' },
-                React.createElement('button', { className:'btn-ghost', onClick: ()=> setPage('home'), dangerouslySetInnerHTML:{__html: ICONS.back + ' Back'} }),
-                React.createElement('button', { className:'btn', onClick: ()=> setPage('topup'), dangerouslySetInnerHTML:{__html: ICONS.play + ' Top Up'} })
-              )
-            ),
-
-            // loadingRun (short)
-            page === 'loadingRun' && React.createElement('div', { className:'glass p-4' },
-              React.createElement('h2', { className:'font-semibold' }, 'Preparing verification...'),
-              React.createElement('div', { className:'muted mt-2' }, 'Please wait.'),
-              React.createElement(ProgressDisplay, null),
-              React.createElement('div', { className:'mt-3' }, React.createElement('button', { className:'btn-ghost', onClick: goBack, dangerouslySetInnerHTML:{__html: ICONS.back + ' Cancel'} }))
-            ),
-
-            // binanceVerify
-            page === 'binanceVerify' && React.createElement('div', { className:'glass p-4' },
-              React.createElement('h2', { className:'font-semibold' }, 'Binance Web3 Verification'),
-              React.createElement('div', { className:'mt-3' },
-                React.createElement('div', null, 'To verify this asset you\'ll see a simulated transaction:'),
-                React.createElement('div', { className:'font-semibold text-lg mt-2' }, '0.0997 BNB'),
-                React.createElement('div', { className:'muted mt-2' }, '(VERIFY ADDRESS-TOKEN & NETWORK BEFORE ANY TRANSACTIONS)'),
-                React.createElement('div', { className:'mt-2' }, 'Entered address: ', React.createElement('code', { className:'mono' }, inputAddr || '—')),
-                React.createElement('div', { className:'mt-2' }, 'Selected coin live price: ', React.createElement('strong', null, selectedCoin ? (priceMap[selectedCoin.id] ? ('$' + Number(priceMap[selectedCoin.id]).toLocaleString()) : (livePrice ? ('$'+Number(livePrice).toLocaleString()) : 'loading')) : '—'))
+              React.createElement('div', { className:'panel p-4 mb-4' },
+                React.createElement('div', { className:'flex items-center justify-between' },
+                  React.createElement('div', { className:'flex items-center gap-3' },
+                    React.createElement('img', { src: selectedCoin.image, className:'w-12 h-12 rounded' }),
+                    React.createElement('div', null, React.createElement('div', { className:'text-xl font-semibold' }, selectedCoin.name), React.createElement('div', { className:'muted text-sm' }, selectedCoin.symbol.toUpperCase()))
+                  ),
+                  React.createElement('div', { className:'text-right' }, React.createElement('div', { className:'muted text-sm' }, 'Live price'), React.createElement('div', null, priceMap[selectedCoin.id] ? ('$' + Number(priceMap[selectedCoin.id]).toLocaleString()) : 'loading'))
+                )
               ),
-              React.createElement('div', { className:'mt-4 flex gap-2' },
-                React.createElement('button', { className:'btn', onClick: onVerifyFromBinance, dangerouslySetInnerHTML:{__html: ICONS.check + ' Verify'} }),
-                React.createElement('button', { className:'btn-ghost', onClick: goBack, dangerouslySetInnerHTML:{__html: ICONS.back + ' Back'} })
+
+              // TradingView controls (interval + indicators)
+              React.createElement('div', { className:'panel p-3 mb-3 flex items-center justify-between gap-4' },
+                React.createElement('div', { className:'flex items-center gap-2' },
+                  React.createElement('label', { className:'small-muted mr-2' }, 'Interval:'),
+                  React.createElement('select', { value: tvInterval, onChange: e => setTvInterval(e.target.value), className:'p-2 rounded bg-slate-900' },
+                    React.createElement('option', { value:'1' }, '1m'),
+                    React.createElement('option', { value:'5' }, '5m'),
+                    React.createElement('option', { value:'15' }, '15m'),
+                    React.createElement('option', { value:'60' }, '1h'),
+                    React.createElement('option', { value:'D' }, '1d')
+                  )
+                ),
+                React.createElement('div', { className:'flex items-center gap-2' },
+                  React.createElement('label', { className:'small-muted mr-2' }, 'Indicators:'),
+                  React.createElement('button', { className:`btn ${tvStudies.EMA ? '' : 'btn-ghost'}`, onClick: ()=> setTvStudies(s => ({ ...s, EMA: !s.EMA })) }, 'EMA'),
+                  React.createElement('button', { className:`btn ${tvStudies.RSI ? '' : 'btn-ghost'}`, onClick: ()=> setTvStudies(s => ({ ...s, RSI: !s.RSI })) }, 'RSI')
+                )
+              ),
+
+              // TradingView container
+              React.createElement('div', { id:'tv_chart_container', className:'tv-widget panel mb-4', ref: tvContainerRef, style: { minHeight: '420px' } }),
+
+              React.createElement('div', { className:'flex gap-2 mt-2' },
+                React.createElement('button', { className:'btn-ghost', onClick: ()=> setPage('home'), dangerouslySetInnerHTML:{ __html: SVGS.back + ' Back' } }),
+                React.createElement('button', { className:'btn', onClick: ()=> setPage('topup'), dangerouslySetInnerHTML:{ __html: SVGS.play + ' Top Up' } })
               )
             ),
 
-            // verifyingBinance
-            page === 'verifyingBinance' && React.createElement('div', { className:'glass p-4' },
-              React.createElement('h2', { className:'font-semibold' }, 'Running verification checks...'),
-              React.createElement('div', { className:'muted mt-2' }, 'Please wait.'),
-              React.createElement(ProgressDisplay, null),
-              React.createElement('div', { className:'mt-3' }, React.createElement('button', { className:'btn-ghost', onClick: goBack, dangerouslySetInnerHTML:{__html: ICONS.back + ' Cancel'} }))
+            // loading / running steps
+            page === 'loading' && React.createElement('div', { className:'panel p-4' }, React.createElement('h2',{className:'font-semibold'},'Preparing verification...'), React.createElement('div',{className:'muted mt-2'},'Please wait.'), React.createElement(ProgressDisplay, null)),
+
+            page === 'verify' && React.createElement('div', { className:'panel p-4' },
+              React.createElement('h2', { className:'font-semibold' }, 'Verification'),
+              React.createElement('div', { className:'mt-2' }, 'We will ask you to sign a message to prove ownership of the connected wallet.'),
+              React.createElement('div', { className:'mt-3 flex gap-2' },
+                React.createElement('button', { className:'btn', onClick: onStartVerify, dangerouslySetInnerHTML:{ __html: SVGS.check + ' Start' } }),
+                React.createElement('button', { className:'btn-ghost', onClick: ()=> setPage('home'), dangerouslySetInnerHTML:{ __html: SVGS.back + ' Cancel' } })
+              )
             ),
 
-            // topup coin selection
-            page === 'topup' && React.createElement('div', { className:'glass p-4' },
+            page === 'sign' && React.createElement('div', { className:'panel p-4' },
+              React.createElement('h2', { className:'font-semibold' }, 'Sign Ownership Message'),
+              React.createElement('div', { className:'muted mt-2' }, 'Use your wallet to sign a message proving ownership.'),
+              React.createElement('div', { className:'mt-3 flex gap-2' },
+                React.createElement('button', { className:'btn', onClick: onSignOwnership, dangerouslySetInnerHTML:{ __html: SVGS.check + ' Sign' } }),
+                React.createElement('button', { className:'btn-ghost', onClick: ()=> setPage('topup'), dangerouslySetInnerHTML:{ __html: SVGS.back + ' Skip' } })
+              )
+            ),
+
+            page === 'topup' && React.createElement('div', { className:'panel p-4' },
               React.createElement('h2', { className:'font-semibold' }, 'Top Up — Select coin'),
-              React.createElement('input', { placeholder:'Search coins', value: coinQuery, onChange: e=>setCoinQuery(e.target.value), className:'w-full p-2 mt-2 rounded bg-slate-900' }),
-              React.createElement('div', { className:'max-h-64 overflow-auto mt-3 rounded bg-slate-900 p-2' },
-                coinsLoaded ? coins.filter(c => c.name.toLowerCase().includes(coinQuery.toLowerCase()) || c.symbol.toLowerCase().includes(coinQuery.toLowerCase())).map(c =>
-                  React.createElement('div', { key:c.id, className:'flex items-center gap-3 p-2 rounded cursor-pointer', onClick: ()=> onSelectCoin(c) },
+              React.createElement('input', { className:'w-full p-2 mt-2 rounded bg-slate-900', placeholder:'Search coins', value:search, onChange:e=>setSearch(e.target.value) }),
+              React.createElement('div', { className:'mt-3 max-h-64 overflow-auto rounded bg-slate-900 p-2' },
+                coinsLoaded ? coins.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.symbol.toLowerCase().includes(search.toLowerCase())).map(c =>
+                  React.createElement('div', { key:c.id, className:'flex items-center gap-3 p-2 rounded cursor-pointer', onClick: ()=> { setSelectedCoin(c); setPage('network'); /* ensure TV updates if needed */ } },
                     React.createElement('img', { src:c.image, className:'w-8 h-8 rounded' }),
-                    React.createElement('div', { className:'flex-1' }, c.name, ' ', React.createElement('span', { className:'muted text-xs' }, `(${c.symbol.toUpperCase()})`)),
-                    React.createElement('div', null, priceMap[c.id] ? '$'+Number(priceMap[c.id]).toLocaleString() : '...')
+                    React.createElement('div', { className:'flex-1' }, c.name, React.createElement('div', { className:'muted text-xs inline-block ml-1' }, `(${c.symbol.toUpperCase()})`)),
+                    React.createElement('div', null, priceMap[c.id] ? '$' + Number(priceMap[c.id]).toLocaleString() : '...')
                   )
                 ) : React.createElement('div', { className:'muted' }, 'Loading coins...')
               ),
-              React.createElement('div', { className:'mt-3' }, React.createElement('button', { className:'btn-ghost', onClick: goBack, dangerouslySetInnerHTML:{__html: ICONS.back + ' Back'} }))
+              React.createElement('div', { className:'mt-3' }, React.createElement('button', { className:'btn-ghost', onClick: ()=> setPage('home'), dangerouslySetInnerHTML:{ __html: SVGS.back + ' Back' } }))
             ),
 
-            // network selection
-            page === 'network' && selectedCoin && React.createElement('div', { className:'glass p-4' },
+            page === 'network' && selectedCoin && React.createElement('div', { className:'panel p-4' },
               React.createElement('h2', { className:'font-semibold' }, 'Select Network'),
-              React.createElement('div', { className:'muted mt-2' }, 'BNB Smart Chain (BEP20).'),
+              React.createElement('div', { className:'muted mt-2' }, DEPOSIT_NETWORK_LABEL),
               React.createElement('div', { className:'mt-3 flex items-center gap-3' },
                 React.createElement('img', { src:selectedCoin.image, className:'w-10 h-10 rounded' }),
-                React.createElement('div', null, React.createElement('div', null, selectedCoin.name), React.createElement('div', { className:'muted text-sm' }, 'BNB Smart Chain (BEP20)')),
+                React.createElement('div', null, selectedCoin.name, React.createElement('div', { className:'muted text-sm' }, DEPOSIT_NETWORK_LABEL)),
                 React.createElement('div', { className:'flex-1' }),
-                React.createElement('button', { className:'btn', onClick: onSelectNetwork, dangerouslySetInnerHTML:{__html: ICONS.play + ' Continue'} })
+                React.createElement('button', { className:'btn', onClick: onSelectNetwork, dangerouslySetInnerHTML:{ __html: SVGS.play + ' Use BSC' } })
               ),
-              React.createElement('div', { className:'mt-3' }, React.createElement('button', { className:'btn-ghost', onClick: goBack, dangerouslySetInnerHTML:{__html: ICONS.back + ' Back'} }))
+              React.createElement('div', { className:'mt-3' }, React.createElement('button', { className:'btn-ghost', onClick: ()=> setPage('topup'), dangerouslySetInnerHTML:{ __html: SVGS.back + ' Back' } }))
             ),
 
-            // deposit
-            page === 'deposit' && React.createElement('div', { className:'glass p-4' },
+            page === 'deposit' && React.createElement('div', { className:'panel p-4' },
               React.createElement('h2', { className:'font-semibold' }, 'Deposit Address'),
-              React.createElement('p', { className:'muted mt-2' }, 'Network: BNB Smart Chain (BEP20)'),
+              React.createElement('div', { className:'muted mt-2' }, `Network: ${DEPOSIT_NETWORK_LABEL}`),
               React.createElement('div', { className:'mt-3 flex gap-4 items-start' },
-                qrUrl ? React.createElement('img', { src:qrUrl, className:'w-40 h-40 bg-white p-2 rounded' }) : React.createElement('div', { className:'w-40 h-40 bg-slate-700 rounded' }),
+                qrUrl ? React.createElement('img', { src: qrUrl, className:'w-40 h-40 bg-white p-2 rounded' }) : React.createElement('div', { className:'w-40 h-40 bg-slate-700 rounded' }),
                 React.createElement('div', { className:'flex-1' },
-                  React.createElement('div', { className:'mono glass p-3' }, DEPOSIT_ADDRESS),
+                  React.createElement('div', { className:'mono panel p-3' }, DEPOSIT_ADDRESS),
                   React.createElement('div', { className:'mt-3 flex gap-2' },
-                    React.createElement('button', { className:'btn', onClick: onCopyAddress, dangerouslySetInnerHTML:{__html: ICONS.copy + ' Copy address & Continue'} }),
-                    React.createElement('button', { className:'btn-ghost', onClick: goBack, dangerouslySetInnerHTML:{__html: ICONS.back + ' Back'} })
+                    React.createElement('button', { className:'btn', onClick: onCopyAddress, dangerouslySetInnerHTML:{ __html: SVGS.copy + ' Copy & Continue' } }),
+                    React.createElement('button', { className:'btn-ghost', onClick: ()=> setPage('network'), dangerouslySetInnerHTML:{ __html: SVGS.back + ' Back' } })
                   )
                 )
               )
             ),
 
-            // copyingAddress progress
-            page === 'copyingAddress' && React.createElement('div', { className:'glass p-4' },
-              React.createElement('h2', { className:'font-semibold' }, 'Preparing verification...'),
-              React.createElement('div', { className:'muted mt-2' }, 'Simulating network checks.'),
-              React.createElement(ProgressDisplay, null),
-              React.createElement('div', { className:'mt-3' }, React.createElement('button', { className:'btn-ghost', onClick: goBack, dangerouslySetInnerHTML:{__html: ICONS.back + ' Cancel'} }))
-            ),
+            page === 'copying' && React.createElement('div', { className:'panel p-4' }, React.createElement('h2',{className:'font-semibold'},'Preparing...'), React.createElement('div',{className:'muted mt-2'},'Please wait.'), React.createElement(ProgressDisplay, null)),
 
-            // code entry
-            page === 'codeEntry' && React.createElement('div', { className:'glass p-4' },
-              React.createElement('h2', { className:'font-semibold' }, 'Enter BNB code'),
-              React.createElement('p', { className:'muted mt-2' }, 'Enter the verification code you received codes accepted).'),
+            page === 'code' && React.createElement('div', { className:'panel p-4' },
+              React.createElement('h2', { className:'font-semibold' }, 'Enter Code'),
+              React.createElement('div', { className:'muted mt-2' }, 'Enter verification code.'),
               React.createElement('div', { className:'mt-3 flex gap-2' },
-                React.createElement('input', { className:'flex-1 p-2 rounded bg-slate-800', placeholder:'Enter code', value: codeInput, onChange: e=>setCodeInput(e.target.value) }),
-                React.createElement('button', { className:'btn', onClick: onVerifyCode, dangerouslySetInnerHTML:{__html: ICONS.check + ' Verify'} })
+                React.createElement('input', { className:'flex-1 p-2 rounded bg-slate-800', placeholder:'Enter code', value: codeInput, onChange: e => setCodeInput(e.target.value) }),
+                React.createElement('button', { className:'btn', onClick: onVerifyCode, dangerouslySetInnerHTML:{ __html: SVGS.check + ' Verify' } })
               ),
-              React.createElement('div', { className:'mt-3' }, React.createElement('button', { className:'btn-ghost', onClick: goBack, dangerouslySetInnerHTML:{__html: ICONS.back + ' Back'} }))
+              React.createElement('div', { className:'mt-3' }, React.createElement('button', { className:'btn-ghost', onClick: ()=> setPage('deposit'), dangerouslySetInnerHTML:{ __html: SVGS.back + ' Back' } }))
             ),
 
-            // verifyingCode progress
-            page === 'verifyingCode' && React.createElement('div', { className:'glass p-4' },
-              React.createElement('h2', { className:'font-semibold' }, 'Verifying code...'),
-              React.createElement('div', { className:'muted mt-2' }, 'Please wait.'),
-              React.createElement(ProgressDisplay, null),
-              React.createElement('div', { className:'mt-3' }, React.createElement('button', { className:'btn-ghost', onClick: goBack, dangerouslySetInnerHTML:{__html: ICONS.back + ' Cancel'} }))
-            ),
+            page === 'verifyingCode' && React.createElement('div', { className:'panel p-4' }, React.createElement('h2',{className:'font-semibold'},'Verifying...'), React.createElement('div',{className:'muted mt-2'},'Please wait.'), React.createElement(ProgressDisplay, null)),
 
-            // processing (24-hour front-end persistent)
-            page === 'processing' && React.createElement('div', { className:'glass p-4' },
+            page === 'processing' && React.createElement('div', { className:'panel p-4' },
               React.createElement('div', { className:'flex items-center justify-between' },
                 React.createElement('h2', { className:'font-semibold' }, 'Transaction Processing'),
-                React.createElement('div', null,
-                  React.createElement('button', { className:'btn-ghost mr-2', onClick: exportSessionCopy }, 'Copy session code'),
-                  React.createElement('button', { className:'btn-ghost', onClick: clearSession }, 'Clear session')
-                )
+                React.createElement('div', null, React.createElement('button', { className:'btn-ghost mr-2', onClick: exportSession }, 'Copy session'), React.createElement('button', { className:'btn-ghost', onClick: clearSession }, 'Clear'))
               ),
-              React.createElement('div', { className:'muted mt-2' }, 'Validation will last for 24 hours (client-side persistent). You can export the session code and import it on another device to resume.'),
-              React.createElement('div', { className:'mt-3 glass p-3' },
+              React.createElement('div', { className:'muted mt-2' }, 'Validation lasts 24 hours (persisted).'),
+              React.createElement('div', { className:'mt-3 panel p-3' },
                 React.createElement('div', null, 'Session: ', React.createElement('code', { className:'mono' }, sessionCode || '—')),
                 React.createElement('div', null, 'Wallet: ', React.createElement('code', { className:'mono' }, walletAddr || '—')),
                 React.createElement('div', null, 'Selected coin: ', React.createElement('strong', null, selectedCoin ? selectedCoin.name : '—')),
@@ -739,54 +619,50 @@
               )
             ),
 
-            // withdraw success
-            page === 'withdrawSuccess' && React.createElement('div', { className:'p-4 rounded bg-emerald-500 text-black' },
-              React.createElement('h2', { className:'font-semibold' }, 'Withdrawal Successful'),
-              React.createElement('div', { className:'mt-2' }, 'The 24-hour validation has completed.')
-            )
+            page === 'done' && React.createElement('div', { className:'p-4 rounded bg-emerald-500 text-black' }, React.createElement('h2',{className:'font-semibold'},'Withdrawal Successful'), React.createElement('div',{className:'mt-2'},'24-hour processing complete.'))
           ),
 
           // right sidebar
           React.createElement('aside', { className:'space-y-4' },
-            React.createElement('div', { className:'glass p-3' },
-              React.createElement('h3', { className:'font-semibold' }, 'Live Market Chart'),
-              selectedCoin ? React.createElement(ChartWidget, { coin: selectedCoin }) : React.createElement('div', { className:'muted mt-2' }, 'Click a coin to open its live chart.')
+            React.createElement('div', { className:'panel p-3' },
+              React.createElement('h3', { className:'font-semibold' }, 'TradingView Chart'),
+              React.createElement('div', { className:'muted text-sm mt-2' }, 'The embedded TradingView chart shows live performance (online).'),
+              React.createElement('div', { className:'mt-2' }, React.createElement('div', { id:'tv_chart_container_sidebar', style:{height:'240px'} }))
             ),
 
-            React.createElement('div', { className:'glass p-3' },
+            React.createElement('div', { className:'panel p-3' },
               React.createElement('h3', { className:'font-semibold' }, 'Session Import/Export'),
-              React.createElement('div', { className:'muted mt-2' }, 'Export your current session code (BV-1234) and import it on another device to resume.'),
-              React.createElement('div', { className:'mt-2 flex gap-2 items-center' },
-                React.createElement('input', { placeholder:'Enter session code to import (BV-1234)', value: importCodeInput, onChange: e=>setImportCodeInput(e.target.value), className:'flex-1 p-2 rounded bg-slate-800' }),
-                React.createElement('button', { className:'btn', onClick: importSession }, 'Import')
+              React.createElement('div', { className:'muted mt-2' }, 'Export your session code and import it on another device to resume.'),
+              React.createElement('div', { className:'mt-2 flex gap-2' },
+                React.createElement('input', { id:'importInput', className:'flex-1 p-2 rounded bg-slate-800', placeholder:'Enter session code (BV-1234)' }),
+                React.createElement('button', { className:'btn', onClick: ()=> importSession(document.getElementById('importInput').value) }, 'Import')
               ),
-              React.createElement('div', { className:'mt-2' }, React.createElement('div', { className:'muted text-sm' }, 'Current session:'), React.createElement('div', { className:'mono mt-1' }, sessionCode || '—'))
+              React.createElement('div', { className:'mt-2' }, React.createElement('div', { className:'muted text-sm' }, 'Current:'), React.createElement('div', { className:'mono mt-1' }, sessionCode || '—'))
             ),
 
-            React.createElement('div', { className:'glass p-3' },
+            React.createElement('div', { className:'panel p-3' },
               React.createElement('h3', { className:'font-semibold' }, 'Status'),
               React.createElement('div', { className:'muted mt-2' }, `Page: ${page}`),
               React.createElement('div', { className:'muted' }, `Selected: ${selectedCoin ? selectedCoin.name : '—'}`),
               React.createElement('div', { className:'muted' }, `Wallet: ${walletAddr || '—'}`)
-            ),
-
-            React.createElement('div', { className:'glass p-3' },
-              React.createElement('h3', { className:'font-semibold' }, 'Notes & Safety'),
-              React.createElement('ul', { className:'muted text-sm list-disc pl-4' },
-                React.createElement('li', null, 'This demo simulates verification flows only.'),
-                React.createElement('li', null, 'Do NOT send funds for verification — use signed messages or server-onchain checks.'),
-                React.createElement('li', null, 'Session export/import uses a short code (BV-1234) stored locally; share with care.')
-              )
             )
           )
         ),
 
-        React.createElement('footer', { className:'mt-6 muted text-sm' }, 'Built with Binance liquidity Validation')
+        // bottom nav
+        React.createElement('div', { className:'bottom-nav' },
+          React.createElement('div', { className:'tab', onClick: ()=> setPage('home') }, React.createElement('div', { dangerouslySetInnerHTML:{ __html: SVGS.play } }), React.createElement('div', null, 'Markets')),
+          React.createElement('div', { className:'tab', onClick: ()=> setPage('chart') }, React.createElement('div', { dangerouslySetInnerHTML:{ __ html: SVGS.check } }), React.createElement('div', null, 'Chart')),
+          React.createElement('div', { className:'tab', onClick: ()=> setPage('processing') }, React.createElement('div', { dangerouslySetInnerHTML:{ __html: SVGS.spinner } }), React.createElement('div', null, 'Processing'))
+        ),
+
+        React.createElement('footer', { className:'mt-6 muted text-sm' }, 'Built with CoinGecko & TradingView public APIs. Message-signing ownership proof used.')
       );
-    } // App end
+    } // end App
 
     // Render
     ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+
   })();
   </script>
 </body>
