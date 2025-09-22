@@ -111,25 +111,46 @@
   <h2>Withdrawal Successful</h2>
   <p>Your funds are now available.</p>
 </div>
-  
-<!-- Transactions Page -->
-<div id="transactions-page" class="page">
-  <h2>Transactions</h2>
-  <div id="transactions-list" style="max-height:500px; overflow-y:auto; border:1px solid #333; padding:8px; border-radius:6px; background:#1a1a2b;">
-    <!-- Transactions will appear here dynamically -->
+
+  <!-- Settings Page -->
+<div id="settings-page" class="page">
+  <div class="card">
+    <h2>Settings</h2>
+    <p>Binance-style settings page content here...</p>
   </div>
 </div>
 
-  <!-- Notifications Page -->
+<!-- Support Page -->
+<div id="support-page" class="page">
+  <div class="card">
+    <h2>Support</h2>
+    <div id="support-chat" style="height:300px; background:#1a1f2b; padding:8px; border-radius:6px; overflow-y:auto;">AI Chat Messages Here</div>
+    <input type="text" id="support-input" placeholder="Type message..." style="margin-top:8px;"/>
+    <button id="support-send-btn" style="background:#f0b90b;color:black;padding:8px 12px;border-radius:6px;margin-top:4px;">Send</button>
+  </div>
+</div>
+
 <div id="notifications-page" class="page">
   <h2>Notifications</h2>
-  <div style="margin-bottom:10px;">
-    <button class="button" id="notif-on-btn" style="margin-right:8px;">Enable Notifications</button>
-    <button class="button" id="notif-off-btn">Disable Notifications</button>
-  </div>
-  <div id="notifications-list" style="max-height:400px; overflow-y:auto; border:1px solid #333; padding:8px; border-radius:6px; background:#1a1a2b;">
-    <!-- Notifications will appear here dynamically -->
-  </div>
+  <button class="button" id="notif-on-btn">Notifications ON</button>
+  <button class="button" id="notif-off-btn">Notifications OFF</button>
+</div>
+
+<div id="transactions-page" class="page">
+  <h2>Transactions</h2>
+  <div id="transactions-list"></div>
+</div>
+
+<div id="settings-page" class="page">
+  <h2>Settings</h2>
+  <p>Settings page (Binance) </p>
+</div>
+
+<div id="support-page" class="page">
+  <h2>Support</h2>
+  <div id="support-chat" style="height:300px;overflow:auto;border:1px solid #444;padding:4px;margin-bottom:6px;"></div>
+  <input type="text" id="support-input" class="search-input" placeholder="Type a message"/>
+  <button class="button" id="support-send-btn">Send</button>
 </div>
   
 <div id="market-page" class="page">
