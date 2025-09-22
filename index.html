@@ -1,45 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Binance Web3 Wallet Dashboard</title>
-<style>
-  body{margin:0;font-family:sans-serif;background:#0b0b0f;color:white;}
-  .header{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1e1e2a;}
-  .header-left{display:flex;align-items:center;gap:10px;}
-  .header-right{display:flex;align-items:center;gap:10px;}
-  .header img.logo{height:32px;}
-  .button{background:#2a2a3d;color:white;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;margin:2px;display:flex;align-items:center;font-size:12px;}
-  .button img,.button svg{height:16px;margin-right:6px;}
-  .page{display:none;padding:12px;}
-  .page.active{display:block;}
-  .coin-item{padding:6px;cursor:pointer;display:flex;align-items:center;border-bottom:1px solid #222;}
-  .coin-item img{width:20px;height:20px;margin-right:6px;}
-  .search-input{width:100%;padding:6px;margin-bottom:10px;border-radius:6px;border:none;background:#1a1a2b;color:white;}
-  #tradingview-widget-container,#market-tradingview-widget,#trade-tradingview-widget{width:100%;height:400px;margin-bottom:10px;}
-  .progress-ring{width:80px;height:80px;position:relative;margin:20px auto;}
-  .progress-ring circle{fill:transparent;stroke:#f0b90b;stroke-width:8;transform:rotate(-90deg);transform-origin:50% 50%;}
-  .transaction-item{padding:8px;border-bottom:1px solid #333;}
-  .tx-type.deposit{color:#00b300;font-weight:bold;}
-  .tx-type.withdrawal{color:#ff3b30;font-weight:bold;}
-  .tx-status.pending{color:orange;}
-  .tx-status.completed{color:#00b300;}
-  .tx-status.failed{color:#ff3b30;}
-  .footer{display:flex;justify-content:space-around;align-items:center;padding:10px;background:#1e1e2a;position:fixed;bottom:0;width:100%;}
-  .footer .button{flex:1;flex-direction:column;font-size:10px;}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binance Web3 Wallet Dashboard</title>
+  <style>
+    body{margin:0;font-family:sans-serif;background:#0b0b0f;color:white;}
+    .header,.footer{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1e1e2a;}
+    .header img.logo{height:40px;}
+    .button{background:#2a2a3d;color:white;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;margin:2px;display:flex;align-items:center;flex-direction:column;font-size:12px;}
+    .button img, .button svg{height:20px;margin-bottom:2px;}
+    .page{display:none;padding:10px;}
+    .page.active{display:block;}
+    .coin-item{padding:6px;cursor:pointer;display:flex;align-items:center;border-bottom:1px solid #222;}
+    .coin-item img{width:20px;height:20px;margin-right:6px;}
+    .search-input{width:100%;padding:6px;margin-bottom:10px;border-radius:6px;border:none;background:#1a1a2b;color:white;}
+    #tradingview-widget-container, #market-tradingview-widget, #trade-tradingview-widget{width:100%;height:400px;margin-bottom:10px;}
+    .progress-ring{width:80px;height:80px;position:relative;margin:20px auto;}
+    .progress-ring circle{fill:transparent;stroke:#f0b90b;stroke-width:8;transform:rotate(-90deg);transform-origin:50% 50%;}
+    .transaction-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #333;}
+    .transaction-info{display:flex;flex-direction:column;}
+    .transaction-meta{display:flex;flex-direction:column;text-align:right;}
+    .tx-type.deposit{color:#00b300;}
+    .tx-type.withdrawal{color:#ff3b30;}
+    .tx-status.pending{color:#f0b90b;}
+    .tx-status.completed{color:#00b300;}
+    .tx-status.failed{color:#ff3b30;}
+  </style>
 </head>
 <body>
 
 <!-- Header -->
 <div class="header">
-  <div class="header-left">
-    <img class="logo" src="https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png" alt="BNB">
-    <strong>Binance Web3 Wallet</strong>
+  <div style="display:flex;align-items:center;">
+    <img id="bnb-logo" src="https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png" alt="BNB" style="width:32px;height:32px;margin-right:8px;">
+    <strong>Web3 Wallet</strong>
   </div>
-  <div class="header-right">
-    <button class="button" id="notifications-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/appointment-reminders.png"/>Notify</button>
+  <div>
+    <button class="button" id="notifications-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/appointment-reminders.png"/>Notif</button>
     <button class="button" id="transactions-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/bank-cards.png"/>Txns</button>
     <button class="button" id="more-btn"><img src="https://img.icons8.com/ios-glyphs/30/ffffff/menu-2.png"/>More</button>
   </div>
@@ -87,7 +85,7 @@
 <div id="network-page" class="page">
   <h2>Select Network</h2>
   <div class="coin-item" id="bnb-network">
-    <img src="https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png" alt="BNB">
+    <img id="bnb-network-logo" src="https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png" alt="BNB">
     <p>BNB Smart Chain BEP20</p>
   </div>
 </div>
@@ -112,7 +110,7 @@
   <p>Tether USDT: $8250.78</p>
   <div class="progress-ring">
     <svg width="80" height="80">
-      <circle r="36" cx="40" cy="40"/>
+      <circle r="36" cx="40" cy="40" stroke="#f0b90b" stroke-width="8" fill="transparent"/>
     </svg>
   </div>
   <p id="countdown-timer">24:00:00</p>
@@ -127,7 +125,7 @@
 <div id="transactions-page" class="page">
   <h2>Transactions</h2>
   <div id="transactions-list" style="max-height:500px; overflow-y:auto; border:1px solid #333; padding:8px; border-radius:6px; background:#1a1a2b;">
-    <!-- Transactions will appear here dynamically -->
+    <!-- Transactions will appear here -->
   </div>
 </div>
 
@@ -139,14 +137,36 @@
   <div id="market-tradingview-widget"></div>
 </div>
 
+<!-- Settings Page -->
+<div id="settings-page" class="page">
+  <h2>Settings</h2>
+  <p>Binance-settings page content here...</p>
+</div>
+
+<!-- Support Page -->
+<div id="support-page" class="page">
+  <h2>Support</h2>
+  <div id="support-chat" style="height:300px; background:#1a1f2b; padding:8px; border-radius:6px; overflow-y:auto;">AI Chat Messages Here</div>
+  <input type="text" id="support-input" placeholder="Type message..." style="margin-top:8px;"/>
+  <button id="support-send-btn" style="background:#f0b90b;color:black;padding:8px 12px;border-radius:6px;margin-top:4px;">Send</button>
+</div>
+
+<!-- Notifications Page -->
+<div id="notifications-page" class="page">
+  <h2>Notifications</h2>
+  <p>Enable notifications to receive daily market updates:</p>
+  <button id="notif-on-btn" style="background:#f0b90b;color:black;padding:8px;border-radius:6px;margin-right:4px;">ON</button>
+  <button id="notif-off-btn" style="background:#777;color:white;padding:8px;border-radius:6px;">OFF</button>
+</div>
+
 <!-- Trade Page -->
 <div id="trade-page" class="page">
-  <div class="card">
+  <div>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <h2>Trade</h2>
       <select id="trade-coin-select" style="background:#1a1f2b;color:white;padding:6px 12px;border-radius:6px;border:none;"></select>
     </div>
-    <div id="trade-tradingview-widget" style="height:400px; margin-top:12px;"></div>
+    <div id="trade-tradingview-widget"></div>
     <div style="display:flex; gap:8px; margin-top:8px;">
       <button id="buy-btn" style="flex:1;background:#00b300;color:white;padding:8px 0;border-radius:6px;font-weight:bold;">Buy</button>
       <button id="sell-btn" style="flex:1;background:#ff3b30;color:white;padding:8px 0;border-radius:6px;font-weight:bold;">Sell</button>
