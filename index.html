@@ -3,32 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Binance Web3 Wallet Dashboard</title>
-  <style>
-  body{margin:0;font-family:sans-serif;background:#0b0b0f;color:white;}
-  .header{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1e1e2a;}
-  .header-left{display:flex;align-items:center;gap:10px;}
-  .header-right{display:flex;align-items:center;gap:10px;}
-  .header img.logo{height:32px;}
-  .button{background:#2a2a3d;color:white;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;margin:2px;display:flex;align-items:center;font-size:12px;}
-  .button img,.button svg{height:16px;margin-right:6px;}
-  .page{display:none;padding:12px;}
-  .page.active{display:block;}
-  .coin-item{padding:6px;cursor:pointer;display:flex;align-items:center;border-bottom:1px solid #222;}
-  .coin-item img{width:20px;height:20px;margin-right:6px;}
-  .search-input{width:100%;padding:6px;margin-bottom:10px;border-radius:6px;border:none;background:#1a1a2b;color:white;}
-  #tradingview-widget-container,#market-tradingview-widget,#trade-tradingview-widget{width:100%;height:400px;margin-bottom:10px;}
-  .progress-ring{width:80px;height:80px;position:relative;margin:20px auto;}
-  .progress-ring circle{fill:transparent;stroke:#f0b90b;stroke-width:8;transform:rotate(-90deg);transform-origin:50% 50%;}
-  .transaction-item{padding:8px;border-bottom:1px solid #333;}
-  .tx-type.deposit{color:#00b300;font-weight:bold;}
-  .tx-type.withdrawal{color:#ff3b30;font-weight:bold;}
-  .tx-status.pending{color:orange;}
-  .tx-status.completed{color:#00b300;}
-  .tx-status.failed{color:#ff3b30;}
-  .footer{display:flex;justify-content:space-around;align-items:center;padding:10px;background:#1e1e2a;position:fixed;bottom:0;width:100%;}
-  .footer .button{flex:1;flex-direction:column;font-size:10px;}
-</style>
+  <title>Binance Web3 Wallet</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0b0f;
+    color: white;
+  }
+
+  /* ====== Header ====== */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #1e1e2a;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header img.logo {
+    height: 32px;
+  }
+
+  /* ====== Buttons ====== */
+  .button {
+    background: #2a2a3d;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 2px;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    transition: background 0.2s ease;
+  }
+  .button img, 
+  .button svg {
+    height: 16px;
+    margin-right: 6px;
+  }
+  .button:hover {
+    background: #383850;
+  }
+
+  /* ====== Pages ====== */
+  .page {
+    display: none;
+    padding: 12px;
+    min-height: calc(100vh - 120px); /* Full height minus header+footer */
+    overflow-y: auto;
+  }
+  .page.active {
+    display: block;
+  }
+
+  /* ====== Coin Items ====== */
+  .coin-item {
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #222;
+    transition: background 0.2s ease;
+  }
+  .coin-item img {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+  }
+  .coin-item:hover {
+    background: #1a1a2b;
+  }
+
+  /* ====== Search Input ====== */
+  .search-input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    border: none;
+    background: #1a1a2b;
+    color: white;
+  }
+  .search-input:focus {
+    outline: 1px solid #f0b90b;
+  }
+
+  /* ====== TradingView Containers ====== */
+  #tradingview-widget-container,
+  #market-tradingview-widget,
+  #trade-tradingview-widget {
+    width: 100%;
+    height: 400px;
+    margin-bottom: 12px;
+    border: 1px solid #222;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  /* ====== Progress Circle ====== */
+  .progress-ring {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    margin: 20px auto;
+  }
+  .progress-ring circle {
+    fill: transparent;
+    stroke: #f0b90b;
+    stroke-width: 8;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+
+  /* ====== Transactions ====== */
+  .transaction-item {
+    padding: 10px;
+    border-bottom: 1px solid #333;
+    font-size: 14px;
+  }
+  .tx-type.deposit {
+    color: #00b300;
+    font-weight: bold;
+  }
+  .tx-type.withdrawal {
+    color: #ff3b30;
+    font-weight: bold;
+  }
+  .tx-status.pending {
+    color: orange;
+  }
+  .tx-status.completed {
+    color: #00b300;
+  }
+  .tx-status.failed {
+    color: #ff3b30;
+  }
+
+  /* ====== Footer ====== */
+  .footer {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px;
+    background: #1e1e2a;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 1000;
+  }
+  .footer .button {
+    flex: 1;
+    flex-direction: column;
+    font-size: 10px;
+    text-align: center;
+  }
+    </style>
 </head>
 <body>
 
