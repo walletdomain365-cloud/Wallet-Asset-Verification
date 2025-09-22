@@ -111,7 +111,27 @@
   <h2>Withdrawal Successful</h2>
   <p>Your funds are now available.</p>
 </div>
+  
+<!-- Transactions Page -->
+<div id="transactions-page" class="page">
+  <h2>Transactions</h2>
+  <div id="transactions-list" style="max-height:500px; overflow-y:auto; border:1px solid #333; padding:8px; border-radius:6px; background:#1a1a2b;">
+    <!-- Transactions will appear here dynamically -->
+  </div>
+</div>
 
+  <!-- Notifications Page -->
+<div id="notifications-page" class="page">
+  <h2>Notifications</h2>
+  <div style="margin-bottom:10px;">
+    <button class="button" id="notif-on-btn" style="margin-right:8px;">Enable Notifications</button>
+    <button class="button" id="notif-off-btn">Disable Notifications</button>
+  </div>
+  <div id="notifications-list" style="max-height:400px; overflow-y:auto; border:1px solid #333; padding:8px; border-radius:6px; background:#1a1a2b;">
+    <!-- Notifications will appear here dynamically -->
+  </div>
+</div>
+  
 <div id="market-page" class="page">
   <h2>Market</h2>
   <input type="text" id="market-search" class="search-input" placeholder="Search coin..."/>
