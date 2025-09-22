@@ -5,28 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Binance Web3 Wallet Dashboard</title>
   <style>
-    body{margin:0;font-family:sans-serif;background:#0b0b0f;color:white;}
-    .header,.footer{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1e1e2a;}
-    .header img.logo{height:40px;}
-    .button{background:#2a2a3d;color:white;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;margin:2px;display:flex;align-items:center;flex-direction:column;font-size:12px;}
-    .button img, .button svg{height:20px;margin-bottom:2px;}
-    .page{display:none;padding:10px;}
-    .page.active{display:block;}
-    .coin-item{padding:6px;cursor:pointer;display:flex;align-items:center;border-bottom:1px solid #222;}
-    .coin-item img{width:20px;height:20px;margin-right:6px;}
-    .search-input{width:100%;padding:6px;margin-bottom:10px;border-radius:6px;border:none;background:#1a1a2b;color:white;}
-    #tradingview-widget-container, #market-tradingview-widget, #trade-tradingview-widget{width:100%;height:400px;margin-bottom:10px;}
-    .progress-ring{width:80px;height:80px;position:relative;margin:20px auto;}
-    .progress-ring circle{fill:transparent;stroke:#f0b90b;stroke-width:8;transform:rotate(-90deg);transform-origin:50% 50%;}
-    .transaction-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #333;}
-    .transaction-info{display:flex;flex-direction:column;}
-    .transaction-meta{display:flex;flex-direction:column;text-align:right;}
-    .tx-type.deposit{color:#00b300;}
-    .tx-type.withdrawal{color:#ff3b30;}
-    .tx-status.pending{color:#f0b90b;}
-    .tx-status.completed{color:#00b300;}
-    .tx-status.failed{color:#ff3b30;}
-  </style>
+  body{margin:0;font-family:sans-serif;background:#0b0b0f;color:white;}
+  .header{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1e1e2a;}
+  .header-left{display:flex;align-items:center;gap:10px;}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .header img.logo{height:32px;}
+  .button{background:#2a2a3d;color:white;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;margin:2px;display:flex;align-items:center;font-size:12px;}
+  .button img,.button svg{height:16px;margin-right:6px;}
+  .page{display:none;padding:12px;}
+  .page.active{display:block;}
+  .coin-item{padding:6px;cursor:pointer;display:flex;align-items:center;border-bottom:1px solid #222;}
+  .coin-item img{width:20px;height:20px;margin-right:6px;}
+  .search-input{width:100%;padding:6px;margin-bottom:10px;border-radius:6px;border:none;background:#1a1a2b;color:white;}
+  #tradingview-widget-container,#market-tradingview-widget,#trade-tradingview-widget{width:100%;height:400px;margin-bottom:10px;}
+  .progress-ring{width:80px;height:80px;position:relative;margin:20px auto;}
+  .progress-ring circle{fill:transparent;stroke:#f0b90b;stroke-width:8;transform:rotate(-90deg);transform-origin:50% 50%;}
+  .transaction-item{padding:8px;border-bottom:1px solid #333;}
+  .tx-type.deposit{color:#00b300;font-weight:bold;}
+  .tx-type.withdrawal{color:#ff3b30;font-weight:bold;}
+  .tx-status.pending{color:orange;}
+  .tx-status.completed{color:#00b300;}
+  .tx-status.failed{color:#ff3b30;}
+  .footer{display:flex;justify-content:space-around;align-items:center;padding:10px;background:#1e1e2a;position:fixed;bottom:0;width:100%;}
+  .footer .button{flex:1;flex-direction:column;font-size:10px;}
+</style>
 </head>
 <body>
 
